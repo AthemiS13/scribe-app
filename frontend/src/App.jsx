@@ -305,11 +305,11 @@ function App() {
   }, [inputText, fontSize]);
 
   const increaseFontSize = () => {
-    setFontSize((prev) => Math.min(prev + 2, 32));
+    setFontSize((prev) => Math.min(prev + 2, 70));
   };
 
   const decreaseFontSize = () => {
-    setFontSize((prev) => Math.max(prev - 2, 16));
+    setFontSize((prev) => Math.max(prev - 2, 40));
   };
 
   const handlePrevPage = () => {
@@ -337,7 +337,7 @@ function App() {
               <img src={settingsIcon} alt="Settings" style={iconStyle} />
             </div>
           </div>
-          <a href="https://github.com" style={styles.githubIcon}>
+          <a href="https://github.com/AthemiS13/scribe-app" style={styles.githubIcon}>
             <img src={githubIcon} alt="GitHub" style={iconStyle} />
           </a>
           <div style={styles.verticalLine} />
