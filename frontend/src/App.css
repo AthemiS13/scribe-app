@@ -1,3 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@700&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+* {
+  user-select: none;
+}
+
+input {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
 #app {
     height: 100vh;
     text-align: center;
@@ -56,4 +75,17 @@
 .input-box .input:focus {
     border: none;
     background-color: rgba(255, 255, 255, 1);
+}
+
+.header-text {
+  font-family: 'Instrument Sans', sans-serif;
+  font-weight: 700;
+}
+
+.sidebar-icon:hover {
+  transform: scale(1.1);
+}
+
+.format-button:hover {
+  transform: scale(1.1);
 }
