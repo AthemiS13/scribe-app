@@ -82,3 +82,8 @@ input {
   font-weight: 700;
 }
 
+.sidebar-icon:hover, 
+.format-button:hover {
+  transform: scale(1.1);
+}
+

@@ -10,9 +10,10 @@ import italicIcon from './assets/icons/format-icons/italic.svg';
 import sizeUpIcon from './assets/icons/format-icons/sizeup.svg';
 import sizeDownIcon from './assets/icons/format-icons/sizedown.svg';
 
+// Update the TEXT_CONTAINER to use relative percentages
 const TEXT_CONTAINER = {
-  width: 700,
-  height: 400,
+  widthPercent: 60, // Percent of image width
+  heightPercent: 40, // Percent of image height
   lineHeight: 40,
   maxLines: 4,
   padding: 20,
@@ -121,30 +122,35 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'flex-end',
     margin: 0,
-    paddingTop: '20px',
     paddingRight: '0px', // Add padding for right alignment
     gap: '20px',
     zIndex: 1,
   },
-  productImage: {
-    maxWidth: '1800px', // Set specific max width
-    marginTop: '100px',
-    width: '80%', // Set relative width
-    height: 'auto', // Maintain aspect ratio
-    objectFit: 'contain',
-    alignSelf: 'flex-end', // Align to the right
+  // Modify styles to use relative positioning
+  imageContainer: {
+    position: 'relative',
+    width: '80%', // Match productImage width
+    maxWidth: '2000px', // Match productImage maxWidth
+    alignSelf: 'flex-end',
+    marginTop: '5%', // Add this line to move the container down
   },
+  productImage: {
+    width: '100%', // Take full width of container
+    height: 'auto',
+    display: 'block', // Removes extra space below image
+  },
+  // Modify styles to use relative positioning
   screenOverlay: {
     position: 'absolute',
-    top: '50%',
-    left: '56%',
+    top: '38%', // Adjust these percentages to position correctly
+    left: '50%', 
     transform: 'translate(-50%, -50%)',
-    width: `${TEXT_CONTAINER.width}px`,
-    height: `${TEXT_CONTAINER.height}px`,
+    width: '60%', // Relative to image width
+    height: '30%', // Relative to image height
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'center', // Center content vertically
     color: 'white',
     padding: `${TEXT_CONTAINER.padding}px`,
     zIndex: 2,
@@ -160,18 +166,18 @@ const styles = {
     textAlign: 'left',
     // Font size will be set dynamically
   },
+  // Modify styles to use relative positioning
   navigationOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: '38%', // Match the text overlay
+    left: '0',
+    right: '0',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0 0px',
+    padding: '0 20%', // Adjust arrow positioning
     zIndex: 3,
-    pointerEvents: 'none', // Allow clicks to pass through
+    pointerEvents: 'none',
   },
   arrow: {
     fontSize: '24px',
@@ -343,7 +349,7 @@ function App() {
           <div style={styles.verticalLine} />
         </div>
         <div style={styles.textDisplay}>
-          <div style={styles.displayContainer}>
+          <div style={styles.imageContainer}>
             <img 
               src={productImage} 
               alt="Product Display" 
@@ -367,6 +373,8 @@ function App() {
               <span style={styles.arrow} onClick={handleNextPage}>&gt;</span>
             </div>
           </div>
+          
+          {/* Input section remains the same */}
           <div style={styles.inputSection}>
             <div style={styles.inputRow}>
               <input
