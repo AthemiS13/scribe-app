@@ -9,6 +9,7 @@ import boldIcon from './assets/icons/format-icons/bold.svg';
 import italicIcon from './assets/icons/format-icons/italic.svg';
 import sizeUpIcon from './assets/icons/format-icons/sizeup.svg';
 import sizeDownIcon from './assets/icons/format-icons/sizedown.svg';
+import './App.css';              // ← add this
 
 // Update the TEXT_CONTAINER to use relative percentages
 const TEXT_CONTAINER = {
@@ -192,7 +193,7 @@ const styles = {
     flexDirection: 'column', // Stack elements vertically
     gap: '15px',
     alignItems: 'center',
-    marginTop: '-100px', // Move up
+    marginTop: '100px', // Move up
     position: 'relative',
     zIndex: 4, // Ensure input section is above overlays
   },
@@ -215,17 +216,18 @@ const styles = {
   },
   formatButtons: {
     display: 'flex',
-    gap: '10px',
+    gap: '20px',
     alignSelf: 'flex-start', // Align with input field
     marginLeft: '0', // Align with input field
+    marginTop: '1%', // Add some space above the buttons
   },
   formatButton: {
-    width: '32px', // Increased size
-    height: '32px', // Increased size
-    borderRadius: '4px',
+    width: '64px', // Increased size
+    height: '64px', // Increased size
+    borderRadius: '15px',
     backgroundColor: '#111',
     border: '1px solid #333',
-    padding: '6px',
+    padding: '20px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -264,6 +266,10 @@ function App() {
   const [fontSize, setFontSize] = useState(24);
   const [pages, setPages] = useState([[]]);
   const [currentPage, setCurrentPage] = useState(0);
+  // Add new state for the progress popup
+  const [showProgress, setShowProgress] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [uploadComplete, setUploadComplete] = useState(false);
 
   // Break text at container boundaries, grouping into pages of max 4 lines
   const formatText = (text) => {
@@ -326,6 +332,30 @@ function App() {
     setCurrentPage((p) => (p < pages.length - 1 ? p + 1 : p));
   };
 
+  // Handle the send button click
+  const handleSend = () => {
+    setProgress(0);
+    setUploadComplete(false);
+    setShowProgress(true);
+    
+    // Simulate progress
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      currentProgress += 5;
+      setProgress(currentProgress);
+      
+      if (currentProgress >= 100) {
+        clearInterval(interval);
+        setUploadComplete(true);
+        
+        // Auto-close after 1 second
+        setTimeout(() => {
+          setShowProgress(false);
+        }, 1000);
+      }
+    }, 100); // Update every 100ms
+  };
+
   return (
     <div style={styles.container}>
       <header style={styles.header} className="header-text">scribe</header>
@@ -336,10 +366,10 @@ function App() {
             <div style={styles.sidebarIcon} className="sidebar-icon">
               <img src={textIcon} alt="Text" style={iconStyle} />
             </div>
-            <div style={styles.sidebarIcon}>
+            <div style={styles.sidebarIcon} className="sidebar-icon">  {/* add className */}
               <img src={homeIcon} alt="Home" style={iconStyle} />
             </div>
-            <div style={styles.sidebarIcon}>
+            <div style={styles.sidebarIcon} className="sidebar-icon">  {/* add className */}
               <img src={settingsIcon} alt="Settings" style={iconStyle} />
             </div>
           </div>
@@ -384,8 +414,11 @@ function App() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
               />
-              <button style={styles.sendButton}>
-                Send
+              <button 
+                className="send-button"
+                onClick={handleSend}
+              >
+                <span>Send</span>
                 <img src={uploadIcon} alt="Upload" style={styles.uploadIconStyle} />
               </button>
             </div>
@@ -404,16 +437,35 @@ function App() {
               >
                 <img src={sizeDownIcon} alt="Size Down" style={{ width: '100%', height: '100%', padding: '2px' }} />
               </button>
-              <button style={styles.formatButton} className="format-button">
+              <button style={styles.formatButton} className="format-button"> {/* add className */}
                 <img src={boldIcon} alt="Bold" style={{ width: '100%', height: '100%', padding: '2px' }} />
               </button>
-              <button style={styles.formatButton}>
+              <button style={styles.formatButton} className="format-button"> {/* add className */}
                 <img src={italicIcon} alt="Italic" style={{ width: '100%', height: '100%', padding: '2px' }} />
               </button>
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Progress Popup */}
+      {showProgress && (
+        <div className="progress-overlay">
+          <div className="progress-container">
+            <div 
+              className="progress-circle"
+              style={{ "--progress": `${progress}%` }}
+            >
+              <div className="progress-text">
+                {uploadComplete ? "Done!" : `${progress}%`}
+              </div>
+            </div>
+            <div className="progress-label">
+              {uploadComplete ? "Complete" : "Uploading"}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

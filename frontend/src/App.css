@@ -77,6 +77,7 @@ input {
     background-color: rgba(255, 255, 255, 1);
 }
 
+
 .header-text {
   font-family: 'Instrument Sans', sans-serif;
   font-weight: 700;
@@ -86,4 +87,138 @@ input {
 .format-button:hover {
   transform: scale(1.1);
 }
+
+/* move the border into CSS so we can override it on focus/active */
+.send-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px 30px;
+  border-radius: 25px;
+  background-color: #111;
+  border: 1px solid #333;
+  color: white;
+  cursor: pointer;
+  overflow: hidden;  /* Contain any overflow */
+}
+
+/* Create a pseudo-element for the hover effect */
+.send-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: transparent;
+  border-radius: inherit;
+  transition: transform 0.2s ease-out;
+  z-index: 1;
+}
+
+/* Scale the pseudo-element instead of the entire button */
+.send-button:hover::before {
+  transform: scale(1.1);
+  border: 1px solid #333;
+}
+
+/* Content stays in place */
+.send-button span, 
+.send-button img {
+  position: relative;
+  z-index: 2;
+}
+
+/* White border on active state */
+.send-button:active::before {
+  border-color: white !important;
+}
+
+/* ensure base transition applies */
+.send-button {
+  transition: transform 0.2s ease-out,
+              border-color 0.2s ease-out;
+}
+
+.send-button:hover {
+  transform: scale(1.1);
+}
+
+
+.send-button:active {
+  outline: none;
+  border-color: #fff !important;     /* force white border on click/focus */
+}
+
+/* white border while mouse is down */
+.send-button:active {
+  border-color: #fff !important;
+}
+
+/* Add these styles for the progress popup */
+.progress-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0.5);
+  transition: opacity 0.3s ease;
+}
+
+.progress-container {
+  width: 250px;
+  height: 250px;
+  background-color: rgba(17, 17, 17, 0.8);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border: 1px solid #333;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.progress-circle {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(#fff var(--progress), #333 0deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.progress-circle::before {
+  content: "";
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: #111;
+}
+
+.progress-text {
+  position: relative;
+  font-size: 24px;
+  font-weight: bold;
+  z-index: 2;
+}
+
+.progress-label {
+  font-size: 18px;
+  margin-top: 10px;
+}
+
 
