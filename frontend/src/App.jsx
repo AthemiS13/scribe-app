@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import productImage from './assets/images/scribe-display.png';
 import textIcon from './assets/icons/text.svg';
 import homeIcon from './assets/icons/home.svg';
@@ -143,17 +143,17 @@ const styles = {
   // Modify styles to use relative positioning
   screenOverlay: {
     position: 'absolute',
-    top: '38%', // Adjust these percentages to position correctly
-    left: '50%', 
+    top: '47.8%', // Adjust these percentages to position correctly
+    left: '46.3%',
     transform: 'translate(-50%, -50%)',
-    width: '60%', // Relative to image width
-    height: '30%', // Relative to image height
+    width: '53%', // Relative to image width
+    height: '72%', // Relative to image height
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center', // Center content vertically
     color: 'white',
-    padding: `${TEXT_CONTAINER.padding}px`,
+    //padding: `${TEXT_CONTAINER.padding}px`,
     zIndex: 2,
     pointerEvents: 'none',
     backgroundColor: 'transparent',
@@ -264,12 +264,32 @@ const iconStyle = {
 function App() {
   const [inputText, setInputText] = useState('');
   const [fontSize, setFontSize] = useState(24);
+  const [fontSizeMultiplier, setFSMultiplier] = useState(1);
   const [pages, setPages] = useState([[]]);
   const [currentPage, setCurrentPage] = useState(0);
   // Add new state for the progress popup
   const [showProgress, setShowProgress] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploadComplete, setUploadComplete] = useState(false);
+  const displayAreaRef = useRef(null)
+
+  useEffect(() => {
+    if (!displayAreaRef) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        if (entry.contentBoxSize) {
+          setFontSize(entry.contentRect.width / 13)
+        }
+      }
+    });
+
+    resizeObserver.observe(displayAreaRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [])
 
   // Break text at container boundaries, grouping into pages of max 4 lines
   const formatText = (text) => {
@@ -317,11 +337,11 @@ function App() {
   }, [inputText, fontSize]);
 
   const increaseFontSize = () => {
-    setFontSize((prev) => Math.min(prev + 2, 70));
+    setFSMultiplier((prev) => prev === 3 ? prev : prev + 1)
   };
 
   const decreaseFontSize = () => {
-    setFontSize((prev) => Math.max(prev - 2, 40));
+    setFSMultiplier((prev) => prev === 1 ? 1 : prev - 1)
   };
 
   const handlePrevPage = () => {
@@ -337,17 +357,17 @@ function App() {
     setProgress(0);
     setUploadComplete(false);
     setShowProgress(true);
-    
+
     // Simulate progress
     let currentProgress = 0;
     const interval = setInterval(() => {
       currentProgress += 5;
       setProgress(currentProgress);
-      
+
       if (currentProgress >= 100) {
         clearInterval(interval);
         setUploadComplete(true);
-        
+
         // Auto-close after 1 second
         setTimeout(() => {
           setShowProgress(false);
@@ -380,17 +400,16 @@ function App() {
         </div>
         <div style={styles.textDisplay}>
           <div style={styles.imageContainer}>
-            <img 
-              src={productImage} 
-              alt="Product Display" 
+            <img
+              src={productImage}
+              alt="Product Display"
               style={styles.productImage}
             />
-            <div style={styles.screenOverlay}>
+            <div ref={displayAreaRef} style={styles.screenOverlay}>
               <div
                 style={{
                   ...styles.pageText,
-                  fontSize: `${fontSize}px`,
-                  lineHeight: `${TEXT_CONTAINER.lineHeight}px`
+                  fontSize: `${fontSize * fontSizeMultiplier}px`,
                 }}
               >
                 {pages[currentPage]?.map((line, idx) => (
@@ -403,7 +422,7 @@ function App() {
               <span style={styles.arrow} onClick={handleNextPage}>&gt;</span>
             </div>
           </div>
-          
+
           {/* Input section remains the same */}
           <div style={styles.inputSection}>
             <div style={styles.inputRow}>
@@ -414,7 +433,7 @@ function App() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
               />
-              <button 
+              <button
                 className="send-button"
                 onClick={handleSend}
               >
@@ -447,12 +466,12 @@ function App() {
           </div>
         </div>
       </div>
-      
+
       {/* Progress Popup */}
       {showProgress && (
         <div className="progress-overlay">
           <div className="progress-container">
-            <div 
+            <div
               className="progress-circle"
               style={{ "--progress": `${progress}%` }}
             >
