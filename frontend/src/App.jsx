@@ -474,27 +474,7 @@ function App() {
   };
 
   // Add this keyDown handler to your component
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault(); // Prevent default form submission behavior
-      
-      // Get cursor position
-      const cursorPosition = e.target.selectionStart;
-      
-      // Insert newline character at cursor position
-      const newText = inputText.substring(0, cursorPosition) + 
-                      '\n' + 
-                      inputText.substring(cursorPosition);
-      
-      setInputText(newText);
-      
-      // Set cursor position after the inserted newline
-      setTimeout(() => {
-        e.target.selectionStart = cursorPosition + 1;
-        e.target.selectionEnd = cursorPosition + 1;
-      }, 0);
-    }
-  };
+
 
   return (
     <div style={styles.container}>
@@ -552,7 +532,7 @@ function App() {
                 style={styles.input}
                 value={inputText}
                 onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
+
               />
               <button
                 className="send-button"
