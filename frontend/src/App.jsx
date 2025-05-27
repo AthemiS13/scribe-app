@@ -177,12 +177,12 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0 20%', // Adjust arrow positioning
+    padding: '0px 10%', // Adjust arrow positioning
     zIndex: 3,
     pointerEvents: 'none',
   },
   arrow: {
-    fontSize: '24px',
+    fontSize: '40px',
     color: 'white',
     cursor: 'pointer',
     userSelect: 'none',
@@ -272,6 +272,7 @@ function App() {
   const [showProgress, setShowProgress] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploadComplete, setUploadComplete] = useState(false);
+  const [pageInputs, setPageInputs] = useState(['']); // Store raw input text for each page
   const displayAreaRef = useRef(null)
 
   useEffect(() => {
@@ -295,34 +296,54 @@ function App() {
   // Break text at container boundaries, grouping into pages of max 4 lines
   const formatText = (text) => {
     if (!text) return [['Your Text Will Appear Here']];
+    
+    const paragraphs = text.split('\n');
+    const lines = [];
+    
     const measureEl = document.createElement('div');
     measureEl.style.position = 'absolute';
     measureEl.style.visibility = 'hidden';
-    measureEl.style.fontSize = `${fontSize}px`;
-    measureEl.style.fontFamily = 'sans-serif';
+    // Ensure fontSize is applied correctly, potentially using a state variable if it changes
+    // For example, if you have a state `currentFontSize`
+    measureEl.style.fontSize = `${fontSize * fontSizeMultiplier}px`; 
+    measureEl.style.fontFamily = 'sans-serif'; // Or your specific preview font
     measureEl.style.whiteSpace = 'nowrap';
     document.body.appendChild(measureEl);
-
-    const words = text.split(' ');
-    const lines = [];
-    let currentLine = '';
-    const maxWidth = TEXT_CONTAINER.width - TEXT_CONTAINER.padding * 2;
-
-    for (const word of words) {
-      // Test if adding this word fits in current line
-      measureEl.textContent = currentLine ? `${currentLine} ${word}` : word;
-      if (measureEl.offsetWidth > maxWidth) {
-        if (currentLine) lines.push(currentLine);
-        currentLine = word;
-      } else {
-        currentLine = currentLine ? `${currentLine} ${word}` : word;
-      }
+    
+    // Calculate maxWidth based on the displayAreaRef (preview area)
+    // and TEXT_CONTAINER.widthPercent
+    let maxWidth = 300; // Default or fallback width
+    if (displayAreaRef.current) {
+      const previewContainerWidth = displayAreaRef.current.offsetWidth;
+      maxWidth = (previewContainerWidth * (TEXT_CONTAINER.widthPercent / 100)) - (TEXT_CONTAINER.padding * 2);
     }
-    if (currentLine) lines.push(currentLine);
-
+    
+    paragraphs.forEach(paragraph => {
+      if (paragraph === '') {
+        lines.push(''); // Add an empty line for explicit newlines
+        return;
+      }
+      
+      const words = paragraph.split(' ');
+      let currentLine = '';
+      
+      for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        measureEl.textContent = testLine;
+        if (measureEl.offsetWidth > maxWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+    });
+    
     document.body.removeChild(measureEl);
-
-    // Group lines into pages (4 lines per page)
+    
     const result = [];
     for (let i = 0; i < lines.length; i += TEXT_CONTAINER.maxLines) {
       result.push(lines.slice(i, i + TEXT_CONTAINER.maxLines));
@@ -332,9 +353,15 @@ function App() {
 
   // Recompute pages when inputText or fontSize changes
   useEffect(() => {
-    const newPages = formatText(inputText);
+    // Save the current text to pageInputs first
+    const newPageInputs = [...pageInputs];
+    newPageInputs[currentPage] = inputText;
+    setPageInputs(newPageInputs);
+    
+    // Update only the current page in the pages array
+    const newPages = [...pages];
+    newPages[currentPage] = formatText(inputText)[0]; // Format just the current page text
     setPages(newPages);
-    setCurrentPage(0); // Reset to first page
   }, [inputText, fontSize]);
 
   const increaseFontSize = () => {
@@ -345,18 +372,68 @@ function App() {
     setFSMultiplier((prev) => prev === 1 ? 1 : prev - 1)
   };
 
+  // Update the navigation handlers
   const handlePrevPage = () => {
-    setCurrentPage((p) => (p > 0 ? p - 1 : p));
+    // Save current page text first
+    const newPageInputs = [...pageInputs];
+    newPageInputs[currentPage] = inputText;
+    setPageInputs(newPageInputs);
+    
+    // Navigate to previous page with cycling
+    const prevPage = currentPage > 0 ? currentPage - 1 : pages.length - 1;
+    setCurrentPage(prevPage);
+    
+    // Update input field with previous page's content
+    setInputText(pageInputs[prevPage] || '');
   };
 
   const handleNextPage = () => {
-    setCurrentPage((p) => (p < pages.length - 1 ? p + 1 : p));
+    // Save current page content first
+    const newPageInputs = [...pageInputs];
+    newPageInputs[currentPage] = inputText;
+    setPageInputs(newPageInputs);
+    
+    // Check if we're on the last page
+    if (currentPage === pages.length - 1) {
+      // Check if current page has actual text content
+      const hasContent = pages[currentPage][0] !== 'Your Text Will Appear Here' && 
+                         pages[currentPage].length > 0 && 
+                         pages[currentPage][0] !== '';
+      
+      if (hasContent) {
+        // Clone the pages array and add a new blank page
+        const newPages = [...pages];
+        newPages.push(['']);
+        setPages(newPages);
+        
+        // Add new empty entry to pageInputs
+        const updatedPageInputs = [...newPageInputs];
+        updatedPageInputs.push('');
+        setPageInputs(updatedPageInputs);
+        
+        // Move to the new page
+        const nextPage = currentPage + 1;
+        setCurrentPage(nextPage);
+        
+        // Clear input field for the new blank page
+        setInputText('');
+      } else {
+        // If on last page with no content, cycle to first page
+        setCurrentPage(0);
+        setInputText(pageInputs[0] || '');
+      }
+    } else {
+      // Just navigate to the next existing page
+      const nextPage = currentPage + 1;
+      setCurrentPage(nextPage);
+      setInputText(pageInputs[nextPage] || '');
+    }
   };
 
   async function send() {
     const connected = await Connect()
     if (connected) {
-      const sent = await SendData("ahoj test")
+      const sent = await SendData(inputText) // Use inputText instead of hardcoded string
       if (!sent) {
         console.log("pruser")
       }
@@ -387,6 +464,35 @@ function App() {
         }, 1000);
       }
     }, 100); // Update every 100ms
+  };
+
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const newText = e.target.value;
+    setInputText(newText);
+  };
+
+  // Add this keyDown handler to your component
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent default form submission behavior
+      
+      // Get cursor position
+      const cursorPosition = e.target.selectionStart;
+      
+      // Insert newline character at cursor position
+      const newText = inputText.substring(0, cursorPosition) + 
+                      '\n' + 
+                      inputText.substring(cursorPosition);
+      
+      setInputText(newText);
+      
+      // Set cursor position after the inserted newline
+      setTimeout(() => {
+        e.target.selectionStart = cursorPosition + 1;
+        e.target.selectionEnd = cursorPosition + 1;
+      }, 0);
+    }
   };
 
   return (
@@ -444,7 +550,8 @@ function App() {
                 placeholder="Type Here!"
                 style={styles.input}
                 value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
               />
               <button
                 className="send-button"
