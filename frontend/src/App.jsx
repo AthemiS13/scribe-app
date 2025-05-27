@@ -10,6 +10,7 @@ import italicIcon from './assets/icons/format-icons/italic.svg';
 import sizeUpIcon from './assets/icons/format-icons/sizeup.svg';
 import sizeDownIcon from './assets/icons/format-icons/sizedown.svg';
 import './App.css';              // ← add this
+import { Connect, Disconnect, SendData } from "../wailsjs/go/main/App"
 
 // Update the TEXT_CONTAINER to use relative percentages
 const TEXT_CONTAINER = {
@@ -352,8 +353,20 @@ function App() {
     setCurrentPage((p) => (p < pages.length - 1 ? p + 1 : p));
   };
 
+  async function send() {
+    const connected = await Connect()
+    if (connected) {
+      const sent = await SendData("ahoj test")
+      if (!sent) {
+        console.log("pruser")
+      }
+      await Disconnect()
+    }
+  }
+
   // Handle the send button click
   const handleSend = () => {
+    send()
     setProgress(0);
     setUploadComplete(false);
     setShowProgress(true);
