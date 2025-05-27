@@ -171,19 +171,20 @@ const styles = {
   // Modify styles to use relative positioning
   navigationOverlay: {
     position: 'absolute',
-    top: '38%', // Match the text overlay
+    top: '50%', // Changed for better vertical centering
+    transform: 'translateY(-50%)', // Added for better vertical centering
     left: '0',
     right: '0',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0px 10%', // Adjust arrow positioning
+    padding: '0 18% 0 10%', // Adjusted right padding to bring arrows closer
     zIndex: 3,
     pointerEvents: 'none',
   },
   arrow: {
-    fontSize: '40px',
-    color: 'white',
+    fontSize: '4vw', // Use vw for responsive scaling with viewport width
+    color: 'black',
     cursor: 'pointer',
     userSelect: 'none',
     pointerEvents: 'auto', // Re-enable clicks for arrows
