@@ -263,6 +263,10 @@ const iconStyle = {
   padding: '2px',
 };
 
+// Add this constant for the max line length
+const MAX_LINE_LENGTH = 21;
+const MANUAL_BREAK_MARKER = '\u200B'; // Zero-width space (invisible, safe for input)
+
 function App() {
   const [inputText, setInputText] = useState('');
   const [fontSize, setFontSize] = useState(24);
@@ -274,6 +278,7 @@ function App() {
   const [progress, setProgress] = useState(0);
   const [uploadComplete, setUploadComplete] = useState(false);
   const [pageInputs, setPageInputs] = useState(['']); // Store raw input text for each page
+  const [manualBreaks, setManualBreaks] = useState([[]]); // Array of arrays of break indices
   const displayAreaRef = useRef(null)
 
   useEffect(() => {
@@ -431,14 +436,57 @@ function App() {
     }
   };
 
-  async function send() {
-    const connected = await Connect()
-    if (connected) {
-      const sent = await SendData(inputText) // Use inputText instead of hardcoded string
-      if (!sent) {
-        console.log("pruser")
+  // Helper to insert a manual break at the current cursor position
+  const insertManualBreak = () => {
+    const input = document.activeElement;
+    if (!input || input.tagName !== "INPUT") return;
+    const cursorPos = input.selectionStart;
+    const before = inputText.slice(0, cursorPos);
+    const after = inputText.slice(cursorPos);
+    setInputText(before + MANUAL_BREAK_MARKER + after);
+    // Move cursor after the marker (optional, but recommended)
+    setTimeout(() => {
+      input.setSelectionRange(cursorPos + 1, cursorPos + 1);
+    }, 0);
+  };
+
+  // Handle Ctrl+Enter for manual break
+  const handleInputKeyDown = (e) => {
+    if (e.ctrlKey && e.key === "Enter") {
+      e.preventDefault();
+      insertManualBreak();
+    }
+  };
+
+  // Format text for preview and sending (applies breaks)
+  const getFormattedLines = (text) => {
+    if (!text) return ['Your Text Will Appear Here'];
+    let lines = [];
+    let segments = text.split(MANUAL_BREAK_MARKER);
+
+    for (let segment of segments) {
+      while (segment.length > MAX_LINE_LENGTH) {
+        lines.push(segment.slice(0, MAX_LINE_LENGTH));
+        segment = segment.slice(MAX_LINE_LENGTH);
       }
-      await Disconnect()
+      lines.push(segment);
+    }
+    // Ensure 4 lines per page
+    while (lines.length < 4) lines.push('');
+    return lines.slice(0, 4);
+  };
+
+  async function send() {
+    const connected = await Connect();
+    if (connected) {
+      // Join lines with '\n' for device
+      const lines = getFormattedLines(inputText);
+      const sendString = lines.join('\n');
+      const sent = await SendData(sendString);
+      if (!sent) {
+        console.log("pruser");
+      }
+      await Disconnect();
     }
   }
 
@@ -469,11 +517,59 @@ function App() {
 
   // Handle input changes
   const handleInputChange = (e) => {
-    const newText = e.target.value;
+    // Replace all '-' with the marker for internal storage
+    let newText = e.target.value.replace(/-/g, MANUAL_BREAK_MARKER);
+
+    // Split into segments by manual break marker
+    let segments = newText.split(MANUAL_BREAK_MARKER);
+    let lines = [];
+    for (let segment of segments) {
+      while (segment.length > MAX_LINE_LENGTH) {
+        lines.push(segment.slice(0, MAX_LINE_LENGTH));
+        segment = segment.slice(MAX_LINE_LENGTH);
+      }
+      lines.push(segment);
+    }
+
+    // If more than 4 lines, trim extra
+    if (lines.length > 4) {
+      lines = lines.slice(0, 4);
+      // Rebuild text with markers
+      let rebuilt = '';
+      let charCount = 0;
+      for (let i = 0; i < segments.length && charCount < 4; i++) {
+        let seg = segments[i];
+        while (seg.length > MAX_LINE_LENGTH && charCount < 4) {
+          rebuilt += seg.slice(0, MAX_LINE_LENGTH) + MANUAL_BREAK_MARKER;
+          seg = seg.slice(MAX_LINE_LENGTH);
+          charCount++;
+        }
+        if (charCount < 4) {
+          rebuilt += seg;
+          charCount++;
+          if (i < segments.length - 1 && charCount < 4) rebuilt += MANUAL_BREAK_MARKER;
+        }
+      }
+      newText = rebuilt;
+    } else if (lines.length === 4 && lines[3].length > MAX_LINE_LENGTH) {
+      // Prevent typing more than 21 chars on the 4th line
+      lines[3] = lines[3].slice(0, MAX_LINE_LENGTH);
+      newText = lines.slice(0, 4).join('');
+      // Add back manual breaks
+      let rebuilt = '';
+      let idx = 0;
+      for (let s of segments) {
+        if (idx >= 4) break;
+        let chunk = s.slice(0, MAX_LINE_LENGTH * (4 - idx));
+        rebuilt += chunk;
+        idx += Math.ceil(chunk.length / MAX_LINE_LENGTH) || 1;
+        if (idx < 4) rebuilt += MANUAL_BREAK_MARKER;
+      }
+      newText = rebuilt;
+    }
+
     setInputText(newText);
   };
-
-  // Add this keyDown handler to your component
 
 
   return (
@@ -512,7 +608,7 @@ function App() {
                   fontSize: `${fontSize * fontSizeMultiplier}px`,
                 }}
               >
-                {pages[currentPage]?.map((line, idx) => (
+                {getFormattedLines(pageInputs[currentPage]).map((line, idx) => (
                   <div key={idx}>{line}</div>
                 ))}
               </div>
@@ -530,9 +626,9 @@ function App() {
                 type="text"
                 placeholder="Type Here!"
                 style={styles.input}
-                value={inputText}
+                value={inputText.replace(/\u200B/g, '-')}
                 onChange={handleInputChange}
-
+                onKeyDown={handleInputKeyDown}
               />
               <button
                 className="send-button"
@@ -557,11 +653,18 @@ function App() {
               >
                 <img src={sizeDownIcon} alt="Size Down" style={{ width: '100%', height: '100%', padding: '2px' }} />
               </button>
-              <button style={styles.formatButton} className="format-button"> {/* add className */}
+              <button style={styles.formatButton} className="format-button">
                 <img src={boldIcon} alt="Bold" style={{ width: '100%', height: '100%', padding: '2px' }} />
               </button>
-              <button style={styles.formatButton} className="format-button"> {/* add className */}
-                <img src={italicIcon} alt="Italic" style={{ width: '100%', height: '100%', padding: '2px' }} />
+              {/* Manual Break Button (uses italic icon for now) */}
+              <button
+                style={styles.formatButton}
+                className="format-button"
+                onClick={insertManualBreak}
+                type="button"
+                title="Insert Manual Break"
+              >
+                <img src={italicIcon} alt="Manual Break" style={{ width: '100%', height: '100%', padding: '2px' }} />
               </button>
             </div>
           </div>
