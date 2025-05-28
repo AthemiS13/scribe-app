@@ -476,12 +476,23 @@ function App() {
     return lines.slice(0, 4);
   };
 
+  // New helper to get all formatted lines from all pages
+  const getAllFormattedLines = () => {
+    const allLines = [];
+    for (let i = 0; i < pages.length; i++) {
+      const pageLines = getFormattedLines(pageInputs[i]);
+      allLines.push(...pageLines);
+    }
+    return allLines;
+  };
+
   async function send() {
     const connected = await Connect();
     if (connected) {
-      // Join lines with '\n' for device
-      const lines = getFormattedLines(inputText);
-      const sendString = lines.join('\n');
+      // Get all lines from all pages, each page is 4 lines
+      const allLines = getAllFormattedLines();
+      // Join with '\n' to ensure a break after every line (including after every 4th line)
+      const sendString = allLines.join('\n');
       const sent = await SendData(sendString);
       if (!sent) {
         console.log("pruser");
