@@ -13,6 +13,7 @@ import './App.css';              // ← add this
 import { Connect, Disconnect, SendData } from "../wailsjs/go/main/App"
 import saveIcon from './assets/icons/save.svg';
 import importIcon from './assets/icons/import.svg';
+import deleteIcon from './assets/icons/delete.svg';
 
 // Update the TEXT_CONTAINER to use relative percentages
 const TEXT_CONTAINER = {
@@ -681,6 +682,19 @@ function App() {
     }
   };
 
+  // Add this function with your other handler functions
+  const handleClearPage = () => {
+    // Clear the input text
+    setInputText('');
+    
+    // Reset to a single empty page
+    setPageInputs(['']);
+    setPages([['']]);
+    
+    // Go back to the first page
+    setCurrentPage(0);
+  };
+
   return (
     <div style={styles.container}>
       <header style={styles.header} className="header-text">scribe</header>
@@ -767,23 +781,26 @@ function App() {
                 <button style={styles.formatButton} className="format-button">
                   <img src={boldIcon} alt="Bold" style={{ width: '100%', height: '100%', padding: '2px' }} />
                 </button>
-                <button
-                  style={styles.formatButton}
-                  className="format-button"
-                  onClick={insertManualBreak}
-                  type="button"
-                  title="Insert Manual Break"
-                >
-                  <img src={italicIcon} alt="Manual Break" style={{ width: '100%', height: '100%', padding: '2px' }} />
-                </button>
+                {/* Removed the italic/manual break button */}
               </div>
               
-              {/* Right group - import/export buttons, now shifted left */}
+              {/* Right group - import/export buttons */}
               <div style={{ 
                 display: 'flex', 
                 gap: '20px',
                 marginRight: '150px' // This shifts the buttons to the left by approximately the width of the send button + gap
               }}>
+                {/* New delete button */}
+                <button
+                  style={styles.formatButton}
+                  className="format-button"
+                  onClick={handleClearPage}
+                  type="button"
+                  title="Clear Page"
+                >
+                  <img src={deleteIcon} alt="Delete" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                </button>
+                
                 <button
                   style={styles.formatButton}
                   className="format-button"
