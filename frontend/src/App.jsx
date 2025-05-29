@@ -11,6 +11,8 @@ import sizeUpIcon from './assets/icons/format-icons/sizeup.svg';
 import sizeDownIcon from './assets/icons/format-icons/sizedown.svg';
 import './App.css';              // ← add this
 import { Connect, Disconnect, SendData } from "../wailsjs/go/main/App"
+import saveIcon from './assets/icons/save.svg';
+import importIcon from './assets/icons/import.svg';
 
 // Update the TEXT_CONTAINER to use relative percentages
 const TEXT_CONTAINER = {
@@ -31,7 +33,7 @@ const styles = {
     flexDirection: 'column',
     fontFamily: 'sans-serif',
     position: 'relative',
-    overflow: 'hidden', // Disable scrolling
+    overflow: 'hidden', // Disable scrollingMilitary. Signature, precisely. So you heard how stuff he is. See the bassist sound. Any reason? Yes. Navjot Sidhu wants to. I. So. You do all the time. Something as I'm getting in the country. 
     userSelect: 'text', // Disable text selection/copying
   },
   header: {
@@ -269,7 +271,7 @@ const MANUAL_BREAK_MARKER = '\u200B'; // Zero-width space (invisible, safe for i
 
 function App() {
   const [inputText, setInputText] = useState('');
-  const [fontSize, setFontSize] = useState(24);
+  const [fontSize, setFontSize] = useState(24); 
   const [fontSizeMultiplier, setFSMultiplier] = useState(1);
   const [pages, setPages] = useState([[]]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -301,7 +303,7 @@ function App() {
 
   // Break text at container boundaries, grouping into pages of max 4 lines
   const formatText = (text) => {
-    if (!text) return [['Your Text Will Appear Here']];
+    if (!text) return [['Your Text Will Appear Here!']];
     
     const paragraphs = text.split('\n');
     const lines = [];
@@ -354,7 +356,7 @@ function App() {
     for (let i = 0; i < lines.length; i += TEXT_CONTAINER.maxLines) {
       result.push(lines.slice(i, i + TEXT_CONTAINER.maxLines));
     }
-    return result.length ? result : [['Your Text Will Appear Here']];
+    return result.length ? result : [['Your Text Will Appear Here!']];
   };
 
   // Recompute pages when inputText or fontSize changes
@@ -402,7 +404,7 @@ function App() {
     // Check if we're on the last page
     if (currentPage === pages.length - 1) {
       // Check if current page has actual text content
-      const hasContent = pages[currentPage][0] !== 'Your Text Will Appear Here' && 
+      const hasContent = pages[currentPage][0] !== 'Your Text Will Appear Here!' && 
                          pages[currentPage].length > 0 && 
                          pages[currentPage][0] !== '';
       
@@ -460,7 +462,7 @@ function App() {
 
   // Format text for preview and sending (applies breaks)
   const getFormattedLines = (text) => {
-    if (!text) return ['Your Text Will Appear Here'];
+    if (!text) return ['Your Text Will Appear Here!'];
     let lines = [];
     let segments = text.split(MANUAL_BREAK_MARKER);
 
@@ -582,6 +584,81 @@ function App() {
     setInputText(newText);
   };
 
+  // Add file handling functions
+  const handleSaveFile = () => {
+    try {
+      // Create a JSON representation of all pages with their breaks
+      const dataToSave = {
+        pages: pageInputs,
+        version: "1.0"
+      };
+      
+      const jsonString = JSON.stringify(dataToSave, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      
+      // Create a download link and trigger it
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'scribe-content.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Failed to save file:", error);
+      // You could add a user-friendly error message here
+    }
+  };
+  
+  const handleImportFile = () => {
+    try {
+      // Create a file input element and trigger it
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.json';
+      
+      fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const importedData = JSON.parse(event.target.result);
+            
+            // Validate the imported data has the expected structure
+            if (importedData && Array.isArray(importedData.pages)) {
+              // Update the state with imported pages
+              setPageInputs(importedData.pages);
+              
+              // Generate pages data from imported page inputs
+              const newPages = importedData.pages.map(pageText => 
+                formatText(pageText)[0]
+              );
+              setPages(newPages);
+              
+              // Reset to first page and update input text
+              setCurrentPage(0);
+              setInputText(importedData.pages[0] || '');
+            } else {
+              console.error("Invalid file format");
+              // You could add a user-friendly error message here
+            }
+          } catch (parseError) {
+            console.error("Failed to parse file:", parseError);
+            // You could add a user-friendly error message here
+          }
+        };
+        reader.readAsText(file);
+      };
+      
+      fileInput.click();
+    } catch (error) {
+      console.error("Failed to import file:", error);
+      // You could add a user-friendly error message here
+    }
+  };
 
   return (
     <div style={styles.container}>
@@ -667,7 +744,6 @@ function App() {
               <button style={styles.formatButton} className="format-button">
                 <img src={boldIcon} alt="Bold" style={{ width: '100%', height: '100%', padding: '2px' }} />
               </button>
-              {/* Manual Break Button (uses italic icon for now) */}
               <button
                 style={styles.formatButton}
                 className="format-button"
@@ -676,6 +752,31 @@ function App() {
                 title="Insert Manual Break"
               >
                 <img src={italicIcon} alt="Manual Break" style={{ width: '100%', height: '100%', padding: '2px' }} />
+              </button>
+              
+              {/* Gap between format buttons and file operation buttons */}
+              <div style={{ width: '60px' }}></div>
+              
+              {/* New Save button */}
+              <button
+                style={styles.formatButton}
+                className="format-button"
+                onClick={handleSaveFile}
+                type="button"
+                title="Save to File"
+              >
+                <img src={saveIcon} alt="Save" style={{ width: '100%', height: '100%', padding: '2px' }} />
+              </button>
+              
+              {/* New Import button */}
+              <button
+                style={styles.formatButton}
+                className="format-button"
+                onClick={handleImportFile}
+                type="button"
+                title="Import from File"
+              >
+                <img src={importIcon} alt="Import" style={{ width: '100%', height: '100%', padding: '2px' }} />
               </button>
             </div>
           </div>
