@@ -4,24 +4,24 @@
   <defs>
     <style>
       .st0 {
-        stroke-linejoin: round;
+        stroke-miterlimit: 133.33;
       }
 
       .st0, .st1 {
         fill: none;
         stroke: #e0ddcf;
         stroke-linecap: round;
-        stroke-width: 33.33px;
+        stroke-width: 70px;
       }
 
       .st1 {
-        stroke-miterlimit: 133.33;
+        stroke-linejoin: round;
       }
     </style>
   </defs>
-  <path class="st1" d="M400,250h-166.67c-27.61,0-50,22.39-50,50v266.67c0,27.61,22.39,50,50,50h266.67c27.61,0,50-22.39,50-50v-166.67"/>
+  <path class="st0" d="M460.32,68.28H158.75c-49.96,0-90.47,40.51-90.47,90.47v482.51c0,49.96,40.51,90.47,90.47,90.47h482.51c49.96,0,90.47-40.51,90.47-90.47v-301.57"/>
   <g>
-    <path class="st0" d="M321.2,478.8l212.13-212.13"/>
-    <path class="st0" d="M466.67,500h-166.67v-166.67"/>
+    <path class="st1" d="M317.74,482.26L701.56,98.44"/>
+    <path class="st1" d="M580.95,520.62h-301.57V219.05"/>
   </g>
 </svg>

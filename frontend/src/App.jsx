@@ -593,6 +593,27 @@ function App() {
         version: "1.0"
       };
       
+      // Generate a filename based on the first line of text
+      let filenameBase = '';
+      if (pageInputs.length > 0 && pageInputs[0]) {
+        // Get first line of text (before any line break or manual break)
+        const firstLine = pageInputs[0].split(/[\n\u200B]/)[0] || '';
+        
+        // Clean the filename: remove invalid characters, limit length
+        filenameBase = firstLine
+          .trim()
+          .replace(/[^\w\s-]/g, '') // Remove special characters
+          .replace(/\s+/g, '-')     // Replace spaces with hyphens
+          .slice(0, 30);            // Limit length
+      }
+      
+      // Use a default name if empty or just use timestamp
+      if (!filenameBase) {
+        filenameBase = `scribe-${new Date().toISOString().slice(0, 10)}`;
+      }
+      
+      const filename = `${filenameBase}-scribe.json`;
+      
       const jsonString = JSON.stringify(dataToSave, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       
@@ -600,7 +621,7 @@ function App() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'scribe-content.json';
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
