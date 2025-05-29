@@ -220,10 +220,10 @@ const styles = {
   },
   formatButtons: {
     display: 'flex',
-    gap: '20px',
-    alignSelf: 'flex-start', // Align with input field
-    marginLeft: '0', // Align with input field
-    marginTop: '1%', // Add some space above the buttons
+    justifyContent: 'space-between', // This will push groups to opposite ends
+    width: '100%', // Match parent width (same as input row)
+    alignSelf: 'stretch', // Take full width of parent
+    marginTop: '1%',
   },
   formatButton: {
     width: '64px', // Increased size
@@ -727,57 +727,62 @@ function App() {
               </button>
             </div>
             <div style={styles.formatButtons}>
-              <button
-                style={styles.formatButton}
-                onClick={increaseFontSize}
-                className="format-button"
-              >
-                <img src={sizeUpIcon} alt="Size Up" style={{ width: '100%', height: '100%', padding: '2px' }} />
-              </button>
-              <button
-                style={styles.formatButton}
-                onClick={decreaseFontSize}
-                className="format-button"
-              >
-                <img src={sizeDownIcon} alt="Size Down" style={{ width: '100%', height: '100%', padding: '2px' }} />
-              </button>
-              <button style={styles.formatButton} className="format-button">
-                <img src={boldIcon} alt="Bold" style={{ width: '100%', height: '100%', padding: '2px' }} />
-              </button>
-              <button
-                style={styles.formatButton}
-                className="format-button"
-                onClick={insertManualBreak}
-                type="button"
-                title="Insert Manual Break"
-              >
-                <img src={italicIcon} alt="Manual Break" style={{ width: '100%', height: '100%', padding: '2px' }} />
-              </button>
+              {/* Left group - format buttons */}
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <button
+                  style={styles.formatButton}
+                  onClick={increaseFontSize}
+                  className="format-button"
+                >
+                  <img src={sizeUpIcon} alt="Size Up" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                </button>
+                <button
+                  style={styles.formatButton}
+                  onClick={decreaseFontSize}
+                  className="format-button"
+                >
+                  <img src={sizeDownIcon} alt="Size Down" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                </button>
+                <button style={styles.formatButton} className="format-button">
+                  <img src={boldIcon} alt="Bold" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                </button>
+                <button
+                  style={styles.formatButton}
+                  className="format-button"
+                  onClick={insertManualBreak}
+                  type="button"
+                  title="Insert Manual Break"
+                >
+                  <img src={italicIcon} alt="Manual Break" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                </button>
+              </div>
               
-              {/* Gap between format buttons and file operation buttons */}
-              <div style={{ width: '60px' }}></div>
-              
-              {/* New Save button */}
-              <button
-                style={styles.formatButton}
-                className="format-button"
-                onClick={handleSaveFile}
-                type="button"
-                title="Save to File"
-              >
-                <img src={saveIcon} alt="Save" style={{ width: '100%', height: '100%', padding: '2px' }} />
-              </button>
-              
-              {/* New Import button */}
-              <button
-                style={styles.formatButton}
-                className="format-button"
-                onClick={handleImportFile}
-                type="button"
-                title="Import from File"
-              >
-                <img src={importIcon} alt="Import" style={{ width: '100%', height: '100%', padding: '2px' }} />
-              </button>
+              {/* Right group - import/export buttons, now shifted left */}
+              <div style={{ 
+                display: 'flex', 
+                gap: '20px',
+                marginRight: '150px' // This shifts the buttons to the left by approximately the width of the send button + gap
+              }}>
+                <button
+                  style={styles.formatButton}
+                  className="format-button"
+                  onClick={handleSaveFile}
+                  type="button"
+                  title="Save to File"
+                >
+                  <img src={saveIcon} alt="Save" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                </button>
+                
+                <button
+                  style={styles.formatButton}
+                  className="format-button"
+                  onClick={handleImportFile}
+                  type="button"
+                  title="Import from File"
+                >
+                  <img src={importIcon} alt="Import" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                </button>
+              </div>
             </div>
           </div>
         </div>

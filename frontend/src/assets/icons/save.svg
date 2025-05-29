@@ -1,6 +1,25 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M12 7.5H7C6.17157 7.5 5.5 8.17157 5.5 9V17C5.5 17.8284 6.17157 18.5 7 18.5H15C15.8284 18.5 16.5 17.8284 16.5 17V12" stroke="#000000" stroke-linecap="round"/>
-<path d="M12.5 11.5L18.864 5.13604" stroke="#000000" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M14.5 4.5H19.5V9.5" stroke="#000000" stroke-linecap="round" stroke-linejoin="round"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 800 800">
+  <!-- Generator: Adobe Illustrator 29.5.1, SVG Export Plug-In . SVG Version: 2.1.0 Build 141)  -->
+  <defs>
+    <style>
+      .st0 {
+        stroke-linejoin: round;
+      }
+
+      .st0, .st1 {
+        fill: none;
+        stroke: #e0ddcf;
+        stroke-linecap: round;
+        stroke-width: 33.33px;
+      }
+
+      .st1 {
+        stroke-miterlimit: 133.33;
+      }
+    </style>
+  </defs>
+  <path class="st1" d="M400,250h-166.67c-27.61,0-50,22.39-50,50v266.67c0,27.61,22.39,50,50,50h266.67c27.61,0,50-22.39,50-50v-166.67"/>
+  <path class="st0" d="M416.67,383.33l212.13-212.13"/>
+  <path class="st0" d="M483.33,150h166.67v166.67"/>
 </svg>
