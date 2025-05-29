@@ -454,7 +454,7 @@ function App() {
 
   // Handle Ctrl+Enter for manual break
   const handleInputKeyDown = (e) => {
-    if (e.ctrlKey && e.key === "Enter") {
+    if (e.shiftKey && e.key === "Enter") {
       e.preventDefault();
       insertManualBreak();
     }
