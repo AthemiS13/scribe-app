@@ -268,7 +268,7 @@ const iconStyle = {
 
 // Add this constant for the max line length
 const MAX_LINE_LENGTH = 21;
-const MANUAL_BREAK_MARKER = '\u200B'; // Zero-width space (invisible, safe for input)
+const MANUAL_BREAK_MARKER = '\n'; // Changed from '\u200B' to '\n'
 
 function App() {
   const [inputText, setInputText] = useState('');
@@ -598,7 +598,7 @@ function App() {
       let filenameBase = '';
       if (pageInputs.length > 0 && pageInputs[0]) {
         // Get first line of text (before any line break or manual break)
-        const firstLine = pageInputs[0].split(/[\n\u200B]/)[0] || '';
+        const firstLine = pageInputs[0].split(/[\n]/)[0] || '';
         
         // Clean the filename: remove invalid characters, limit length
         filenameBase = firstLine
@@ -749,7 +749,7 @@ function App() {
                 type="text"
                 placeholder="Type Here!"
                 style={styles.input}
-                value={inputText.replace(/\u200B/g, '-')}
+                value={inputText.replace(/\n/g, '-')}
                 onChange={handleInputChange}
                 onKeyDown={handleInputKeyDown}
               />
