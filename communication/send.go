@@ -14,11 +14,21 @@ func SendData(dataChar, infoChar bluetooth.DeviceCharacteristic, data string) er
 	if err != nil {
 		return err
 	}
+
 	time.Sleep(100 * time.Millisecond)
 
-	_, err = dataChar.WriteWithoutResponse([]byte(data))
-	if err != nil {
-		return err
+	chunkSize := 20
+
+	for i := 0; i < len(data); i += chunkSize {
+		end := i + chunkSize 
+		if end > len(data) {
+			end = len(data)
+		}
+		_, err = dataChar.WriteWithoutResponse([]byte(data[i:end]))
+		if err != nil {
+			return err
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
 	return nil
 }
