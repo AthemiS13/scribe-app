@@ -25,15 +25,3 @@ export function IsConnected() {
 export function SendData(arg1) {
   return window['go']['main']['App']['SendData'](arg1);
 }
-
-export function SendDataSmart(arg1) {
-  return window['go']['main']['App']['SendDataSmart'](arg1);
-}
-
-export function SendMultiplePages(arg1) {
-  return window['go']['main']['App']['SendMultiplePages'](arg1);
-}
-
-export function SendPagesWithAutoSplit(arg1) {
-  return window['go']['main']['App']['SendPagesWithAutoSplit'](arg1);
-}

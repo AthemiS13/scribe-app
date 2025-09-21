@@ -12,9 +12,3 @@ export function GetPlatformInfo():Promise<string>;
 export function IsConnected():Promise<boolean>;
 
 export function SendData(arg1:string):Promise<boolean>;
-
-export function SendDataSmart(arg1:string):Promise<boolean>;
-
-export function SendMultiplePages(arg1:Array<string>):Promise<boolean>;
-
-export function SendPagesWithAutoSplit(arg1:Array<string>):Promise<boolean>;
