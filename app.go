@@ -205,9 +205,9 @@ func (a *App) SendDataSmart(data string) bool {
 	return true
 }
 
-// SendAllPagesAsContinuousStream sends all pages as one continuous data stream
-// Each page formatted to exactly 4 lines as firmware expects
-func (a *App) SendAllPagesAsContinuousStream(pages []string) bool {
+// SendPagesWithAutoSplit sends pages as a continuous string
+// The firmware automatically splits into pages based on lines_per_page for the chosen font_size
+func (a *App) SendPagesWithAutoSplit(pages []string) bool {
 	if a.bleBackend == nil {
 		fmt.Println("BLE backend not available")
 		return false
@@ -218,9 +218,9 @@ func (a *App) SendAllPagesAsContinuousStream(pages []string) bool {
 		return false
 	}
 
-	fmt.Printf("=== SENDING %d PAGES AS CONTINUOUS STREAM ===\n", len(pages))
+	fmt.Printf("=== SENDING %d PAGES WITH AUTO-SPLIT ===\n", len(pages))
 
-	// Build the continuous data stream: each page must have exactly 4 lines
+	// Build the continuous data stream: just concatenate with newlines
 	var dataStream strings.Builder
 
 	for i, page := range pages {
@@ -229,23 +229,18 @@ func (a *App) SendAllPagesAsContinuousStream(pages []string) bool {
 		}
 
 		// Add the page content
-		dataStream.WriteString(page)
+		dataStream.WriteString(strings.TrimSpace(page))
 
-		// Count existing newlines and add more to make exactly 4 lines total
-		newlineCount := strings.Count(page, "\n")
-		// We need 3 more newlines after content to make 4 lines total
-		// (content line + 3 empty lines = 4 lines per page)
-		for newlineCount < 3 {
-			dataStream.WriteString("\n")
-			newlineCount++
-		}
+		// Add newline to separate from next page (firmware will count newlines for page splitting)
+		dataStream.WriteString("\n")
 
-		fmt.Printf("Page %d: %q (4 lines)\n", i+1, page+strings.Repeat("\n", 3-strings.Count(page, "\n")))
+		fmt.Printf("Page %d: %q\n", i+1, strings.TrimSpace(page))
 	}
 
 	finalData := dataStream.String()
 	fmt.Printf("Final data stream: %q\n", finalData)
 	fmt.Printf("Total length: %d bytes\n", len(finalData))
+	fmt.Printf("Firmware will auto-split based on lines_per_page (font_size 1 = 4 lines/page, 2 = 2 lines/page, 3+ = 1 line/page)\n")
 
 	// Connect once and send all data as continuous stream
 	if !a.Connect() {
@@ -255,12 +250,12 @@ func (a *App) SendAllPagesAsContinuousStream(pages []string) bool {
 
 	err := a.bleBackend.SendData(finalData)
 	if err != nil {
-		fmt.Printf("Failed to send continuous data stream: %v\n", err)
+		fmt.Printf("Failed to send data stream: %v\n", err)
 		a.Disconnect()
 		return false
 	}
 
-	fmt.Printf("All %d pages sent as continuous stream!\n", len(pages))
+	fmt.Printf("All %d pages sent successfully! Firmware will handle page splitting.\n", len(pages))
 	a.Disconnect()
 	return true
 } // ForceDisconnect explicitly disconnects (call this when completely done)

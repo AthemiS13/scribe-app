@@ -22,10 +22,6 @@ export function IsConnected() {
   return window['go']['main']['App']['IsConnected']();
 }
 
-export function SendAllPagesAsContinuousStream(arg1) {
-  return window['go']['main']['App']['SendAllPagesAsContinuousStream'](arg1);
-}
-
 export function SendData(arg1) {
   return window['go']['main']['App']['SendData'](arg1);
 }
@@ -36,4 +32,8 @@ export function SendDataSmart(arg1) {
 
 export function SendMultiplePages(arg1) {
   return window['go']['main']['App']['SendMultiplePages'](arg1);
+}
+
+export function SendPagesWithAutoSplit(arg1) {
+  return window['go']['main']['App']['SendPagesWithAutoSplit'](arg1);
 }
