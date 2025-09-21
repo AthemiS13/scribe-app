@@ -171,6 +171,14 @@ func (w *WindowsBLEBackend) sendDataOptimized(data string) error {
 	return nil
 }
 
+/*
+data transfer info
+	- total size of info: 4 bytes
+	- 1st byte = version
+	- 2nd byte = font size
+	- 3-4th byte = data size
+*/
+
 // createInfoPacket creates the info packet with proper byte ordering
 func (w *WindowsBLEBackend) createInfoPacket(dataSize uint16) []byte {
 	buf := make([]byte, 4)

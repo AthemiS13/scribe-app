@@ -334,6 +334,14 @@ func (m *MacOSBLEBackend) SendData(data string) error {
 	return nil
 }
 
+/*
+data transfer info
+	- total size of info: 4 bytes
+	- 1st byte = version
+	- 2nd byte = font size
+	- 3-4th byte = data size
+*/
+
 // createInfoPacket creates the SCRIBE info packet (4 bytes: version, font, data_size_low, data_size_high)
 func (m *MacOSBLEBackend) createInfoPacket(dataSize uint16) []byte {
 	buf := make([]byte, 4)
