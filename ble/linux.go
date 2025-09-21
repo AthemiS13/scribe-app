@@ -88,35 +88,10 @@ func (l *LinuxBLEBackend) Connect(deviceAddress string) error {
 		return ErrAdapterNotFound
 	}
 
-	// For Linux implementation, we need to scan first to get the ScanResult
-	ch := make(chan bluetooth.ScanResult, 1)
-	var scanErr error
+	macAddress := bluetooth.Address{}
+	macAddress.Set(deviceAddress)
 
-	go func() {
-		err := l.adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
-			if device.LocalName() == "SCRIBE" && device.Address.String() == deviceAddress {
-				adapter.StopScan()
-				ch <- device
-			}
-		})
-		if err != nil {
-			scanErr = err
-		}
-	}()
-
-	var scanResult bluetooth.ScanResult
-	select {
-	case scanResult = <-ch:
-		// Found the device
-	case <-time.After(5 * time.Second):
-		l.adapter.StopScan()
-		if scanErr != nil {
-			return scanErr
-		}
-		return ErrDeviceNotFound
-	}
-
-	device, err := l.adapter.Connect(scanResult.Address, bluetooth.ConnectionParams{})
+	device, err := l.adapter.Connect(macAddress, bluetooth.ConnectionParams{})
 	if err != nil {
 		return ErrConnectionFailed
 	}
@@ -243,6 +218,14 @@ func (l *LinuxBLEBackend) Close() error {
 	}
 	return nil
 }
+
+/*
+data transfer info
+	- total size of info: 4 bytes
+	- 1st byte = version
+	- 2nd byte = font size
+	- 3-4th byte = data size
+*/
 
 // infoToBytes converts transfer info to bytes
 func (l *LinuxBLEBackend) infoToBytes(v uint8, size uint16, font uint8) []byte {
