@@ -10,7 +10,7 @@ import italicIcon from './assets/icons/format-icons/italic.svg';
 import sizeUpIcon from './assets/icons/format-icons/sizeup.svg';
 import sizeDownIcon from './assets/icons/format-icons/sizedown.svg';
 import './App.css';              // ← add this
-import { Connect, Disconnect, SendData } from "../wailsjs/go/main/App"
+import { Connect, Disconnect, SendData, SendMultiplePages, SendAllPagesAsContinuousStream } from "../wailsjs/go/main/App"
 import saveIcon from './assets/icons/save.svg';
 import importIcon from './assets/icons/import.svg';
 import deleteIcon from './assets/icons/delete.svg';
@@ -490,17 +490,22 @@ function App() {
   };
 
   async function send() {
-    const connected = await Connect();
-    if (connected) {
-      // Get all lines from all pages, each page is 4 lines
-      const allLines = getAllFormattedLines();
-      // Join with '\n' to ensure a break after every line (including after every 4th line)
-      const sendString = allLines.join('\n');
-      const sent = await SendData(sendString);
-      if (!sent) {
-        console.log("pruser");
+    // Prepare pages as separate strings for continuous stream transmission
+    const pageStrings = [];
+    for (let i = 0; i < pages.length; i++) {
+      const pageLines = getFormattedLines(pageInputs[i]);
+      if (pageLines.length > 0 && pageLines.some(line => line.trim() !== '' && line !== 'Your Text Will Appear Here!')) {
+        // Join lines within each page with newlines
+        pageStrings.push(pageLines.join('\n'));
       }
-      await Disconnect();
+    }
+    
+    if (pageStrings.length > 0) {
+      console.log(`Sending ${pageStrings.length} pages as continuous stream to SCRIBE...`);
+      const sent = await SendAllPagesAsContinuousStream(pageStrings);
+      if (!sent) {
+        console.log("Failed to send pages to SCRIBE");
+      }
     }
   }
 
