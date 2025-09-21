@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import productImage from "./assets/images/scribe-display.png";
 import textIcon from "./assets/icons/text.svg";
 import homeIcon from "./assets/icons/home.svg";
@@ -6,17 +6,10 @@ import settingsIcon from "./assets/icons/settings.svg";
 import githubIcon from "./assets/icons/github.svg";
 import uploadIcon from "./assets/icons/upload.svg";
 import boldIcon from "./assets/icons/format-icons/bold.svg";
-import italicIcon from "./assets/icons/format-icons/italic.svg";
 import sizeUpIcon from "./assets/icons/format-icons/sizeup.svg";
 import sizeDownIcon from "./assets/icons/format-icons/sizedown.svg";
 import "./App.css"; // ← add this
-import {
-  Connect,
-  Disconnect,
-  SendData,
-  SendMultiplePages,
-  SendPagesWithAutoSplit,
-} from "../wailsjs/go/main/App";
+import { Connect, Disconnect, SendData } from "../wailsjs/go/main/App";
 import saveIcon from "./assets/icons/save.svg";
 import importIcon from "./assets/icons/import.svg";
 import deleteIcon from "./assets/icons/delete.svg";
