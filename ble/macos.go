@@ -255,74 +255,42 @@ func (m *MacOSBLEBackend) SendData(data string) error {
 	timeSinceConnect := time.Since(m.lastConnectTime)
 	m.mutex.Unlock()
 
-	fmt.Printf("=== SCRIBE TRANSMISSION #%d (Connected for: %v) ===\n", sendCount, timeSinceConnect.Round(time.Second))
-	fmt.Printf("Sending data to SCRIBE on macOS (length: %d bytes)...\n", len(data))
+	fmt.Printf("\n🔵 === SCRIBE TRANSMISSION #%d (Connected for: %v) ===\n", sendCount, timeSinceConnect.Round(time.Second))
+	fmt.Printf("🔵 DEBUG: Starting SendData - data length: %d bytes\n", len(data))
+	fmt.Printf("🔵 DEBUG: Connection status - Device: %p, DataChar: %p, InfoChar: %p\n", m.connectedDevice, m.dataChar, m.infoChar)
 
 	// Send info packet first (SCRIBE protocol)
 	infoData := m.createInfoPacket(uint16(len(data)))
+	fmt.Printf("🔵 DEBUG: About to send info packet - size: %d bytes\n", len(infoData))
+	fmt.Printf("🔵 DEBUG: Info packet bytes: %v\n", infoData)
+	fmt.Printf("🔵 DEBUG: Info packet hex: ")
+	for _, b := range infoData {
+		fmt.Printf("%02x ", b)
+	}
+	fmt.Println()
+
+	start := time.Now()
 	_, err := m.infoChar.WriteWithoutResponse(infoData)
+	duration := time.Since(start)
+
 	if err != nil {
+		fmt.Printf("🔴 ERROR: Info packet send failed after %v: %v\n", duration, err)
 		return fmt.Errorf("failed to send info packet: %v", err)
 	}
 
-	fmt.Printf("Sent info packet: [version=%d, font=%d, size=%d]\n", infoData[0], infoData[1], binary.LittleEndian.Uint16(infoData[2:]))
+	fmt.Printf("🟢 SUCCESS: Info packet sent in %v - [version=%d, font=%d, size=%d]\n", duration, infoData[0], infoData[1], binary.LittleEndian.Uint16(infoData[2:])) // macOS-specific: Longer delay for info packet processing
+	// macOS BLE stack needs more time to handle characteristic writes
+	fmt.Printf("🔵 DEBUG: Starting 250ms info packet processing delay...\n")
+	delayStart := time.Now()
+	time.Sleep(250 * time.Millisecond)
+	fmt.Printf("🔵 DEBUG: Info packet delay completed in %v\n", time.Since(delayStart))
 
-	// Critical delay: Allow SCRIBE firmware to process info packet and allocate buffer
-	// The firmware needs time to malloc() the data buffer and set up state
-	time.Sleep(200 * time.Millisecond)
-
-	// Send data in optimized chunks for macOS
-	chunkSize := 18 // Optimal for macOS BLE stack
-	for i := 0; i < len(data); i += chunkSize {
-		end := i + chunkSize
-		if end > len(data) {
-			end = len(data)
-		}
-
-		chunk := []byte(data[i:end])
-		_, err = m.dataChar.WriteWithoutResponse(chunk)
-		if err != nil {
-			return fmt.Errorf("failed to send data chunk: %v", err)
-		}
-
-		fmt.Printf("Sent chunk %d-%d (%d bytes)\n", i, end-1, len(chunk))
-
-		// macOS-optimized delay between chunks
-		time.Sleep(10 * time.Millisecond)
+	// macOS-specific adaptive chunking strategy
+	fmt.Printf("🔵 DEBUG: Calling sendDataWithMacOSOptimizations...\n")
+	err = m.sendDataWithMacOSOptimizations(data)
+	if err != nil {
+		return err
 	}
-
-	// CRITICAL: Wait for SCRIBE to finish processing complete transmission
-	// This ensures to_read = -1 before any subsequent SendData() calls
-	// Time needed for: data processing + page creation + display update + flash storage
-
-	// AGGRESSIVE TIMING: Give ESP32 enough time for memory management with multiple pages
-	// PROBLEM: ESP32 heap fragmentation when creating 4+ pages with malloc()
-	// SOLUTION: Extended delays allow memory defragmentation and proper allocation
-
-	baseTime := 800                  // Increased base time for memory operations
-	dataComplexity := len(data) * 12 // Much more time for complex page parsing
-	processingTime := time.Duration(baseTime+dataComplexity) * time.Millisecond
-
-	// Extended limits for unlimited pages
-	if len(data) <= 20 {
-		// Short data: still allow reasonable time
-		if processingTime > 1200*time.Millisecond {
-			processingTime = 1200 * time.Millisecond
-		}
-	} else {
-		// Longer data: give ESP32 plenty of time for memory management
-		if processingTime > 3000*time.Millisecond {
-			processingTime = 3000 * time.Millisecond
-		}
-	}
-
-	// Ensure minimum time for memory operations
-	if processingTime < 800*time.Millisecond {
-		processingTime = 800 * time.Millisecond
-	}
-
-	fmt.Printf("Processing delay: %v (extended timing for unlimited pages)\n", processingTime)
-	time.Sleep(processingTime)
 
 	// Warn about potential firmware state issues after multiple consecutive sends
 	if sendCount >= 3 {
@@ -334,7 +302,106 @@ func (m *MacOSBLEBackend) SendData(data string) error {
 	return nil
 }
 
-/*
+// sendDataWithMacOSOptimizations implements macOS-specific BLE data transmission
+// FIXED: Addresses race condition where ESP32 completes processing before all chunks arrive
+func (m *MacOSBLEBackend) sendDataWithMacOSOptimizations(data string) error {
+	fmt.Printf("\n🟡 === ENTERING sendDataWithMacOSOptimizations (RACE CONDITION FIX) ===\n")
+
+	dataLen := len(data)
+	fmt.Printf("🟡 DEBUG: Data length: %d bytes\n", dataLen)
+	fmt.Printf("🟡 DEBUG: Data preview: %q\n", func() string {
+		if len(data) > 50 {
+			return data[:50] + "..."
+		}
+		return data
+	}())
+
+	// CRITICAL FIX: Use single-phase transmission with consistent timing
+	// The race condition occurs because ESP32 processes data before all chunks arrive
+	// Solution: Uniform chunk size and aggressive delays to ensure proper sequencing
+
+	chunkSize := 18                          // Conservative chunk size for macOS BLE reliability
+	interChunkDelay := 25 * time.Millisecond // INCREASED: Prevent ESP32 race condition
+
+	fmt.Printf("� FIXED: Single-phase transmission (%d bytes, %d-byte chunks, %v delays)\n",
+		dataLen, chunkSize, interChunkDelay)
+
+	totalChunks := (dataLen + chunkSize - 1) / chunkSize
+	fmt.Printf("🟡 DEBUG: Will send %d total chunks\n", totalChunks)
+
+	for i := 0; i < dataLen; i += chunkSize {
+		end := i + chunkSize
+		if end > dataLen {
+			end = dataLen
+		}
+
+		chunkNum := (i / chunkSize) + 1
+		chunk := []byte(data[i:end])
+
+		fmt.Printf("🟡 DEBUG: Sending chunk %d/%d [%d-%d] (%d bytes)\n",
+			chunkNum, totalChunks, i, end-1, len(chunk))
+		fmt.Printf("🟡 DEBUG: Chunk string: %q\n", string(chunk))
+		fmt.Printf("🟡 DEBUG: Chunk bytes: %v\n", chunk)
+		fmt.Printf("🟡 DEBUG: Chunk hex: ")
+		for _, b := range chunk {
+			fmt.Printf("%02x ", b)
+		}
+		fmt.Println()
+		fmt.Printf("🟡 DEBUG: Character analysis: ")
+		for _, b := range chunk {
+			if b == '\n' {
+				fmt.Print("\\n ")
+			} else if b == '\r' {
+				fmt.Print("\\r ")
+			} else if b == '\t' {
+				fmt.Print("\\t ")
+			} else if b < 32 || b > 126 {
+				fmt.Printf("[0x%02x] ", b)
+			} else {
+				fmt.Printf("%c ", b)
+			}
+		}
+		fmt.Println()
+
+		chunkStart := time.Now()
+		_, err := m.dataChar.WriteWithoutResponse(chunk)
+		chunkDuration := time.Since(chunkStart)
+
+		if err != nil {
+			fmt.Printf("🔴 ERROR: Chunk %d/%d failed after %v: %v\n", chunkNum, totalChunks, chunkDuration, err)
+			return fmt.Errorf("failed to send chunk %d: %v", chunkNum, err)
+		}
+
+		fmt.Printf("🟢 SUCCESS: Chunk %d/%d sent in %v\n", chunkNum, totalChunks, chunkDuration) // CRITICAL: Always delay after each chunk (except the last one)
+		if i+chunkSize < dataLen {
+			fmt.Printf("🟡 DEBUG: Inter-chunk delay (%v) to prevent race condition...\n", interChunkDelay)
+			time.Sleep(interChunkDelay)
+		}
+	}
+
+	fmt.Printf("🟡 DEBUG: All %d chunks transmitted successfully\n", totalChunks)
+
+	// CRITICAL FIX: Extended processing delay to ensure ESP32 completes processing
+	// The ESP32 needs time to process all chunks sequentially and update to_read properly
+	processingDelay := time.Duration(800+dataLen*8) * time.Millisecond
+
+	// Ensure reasonable bounds
+	if processingDelay < 1000*time.Millisecond {
+		processingDelay = 1000 * time.Millisecond
+	}
+	if processingDelay > 3000*time.Millisecond {
+		processingDelay = 3000 * time.Millisecond
+	}
+
+	fmt.Printf("🟡 DEBUG: Extended processing delay: %v (prevents ESP32 race condition)\n", processingDelay)
+	processingStart := time.Now()
+	time.Sleep(processingDelay)
+	processingActual := time.Since(processingStart)
+	fmt.Printf("🟡 DEBUG: Processing delay completed in %v\n", processingActual)
+
+	fmt.Println("🟢 === RACE CONDITION FIX - Transmission completed successfully ===")
+	return nil
+} /*
 data transfer info
 	- total size of info: 4 bytes
 	- 1st byte = version
