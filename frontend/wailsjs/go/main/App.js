@@ -10,6 +10,18 @@ export function Disconnect() {
   return window['go']['main']['App']['Disconnect']();
 }
 
+export function ForceDisconnect() {
+  return window['go']['main']['App']['ForceDisconnect']();
+}
+
+export function GetPlatformInfo() {
+  return window['go']['main']['App']['GetPlatformInfo']();
+}
+
+export function IsConnected() {
+  return window['go']['main']['App']['IsConnected']();
+}
+
 export function SendData(arg1) {
   return window['go']['main']['App']['SendData'](arg1);
 }

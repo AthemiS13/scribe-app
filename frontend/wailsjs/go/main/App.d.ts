@@ -5,4 +5,10 @@ export function Connect():Promise<boolean>;
 
 export function Disconnect():Promise<boolean>;
 
+export function ForceDisconnect():Promise<boolean>;
+
+export function GetPlatformInfo():Promise<string>;
+
+export function IsConnected():Promise<boolean>;
+
 export function SendData(arg1:string):Promise<boolean>;

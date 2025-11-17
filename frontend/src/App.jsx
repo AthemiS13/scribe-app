@@ -1,19 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import productImage from './assets/images/scribe-display.png';
-import textIcon from './assets/icons/text.svg';
-import homeIcon from './assets/icons/home.svg';
-import settingsIcon from './assets/icons/settings.svg';
-import githubIcon from './assets/icons/github.svg';
-import uploadIcon from './assets/icons/upload.svg';
-import boldIcon from './assets/icons/format-icons/bold.svg';
-import italicIcon from './assets/icons/format-icons/italic.svg';
-import sizeUpIcon from './assets/icons/format-icons/sizeup.svg';
-import sizeDownIcon from './assets/icons/format-icons/sizedown.svg';
-import './App.css';              // ← add this
-import { Connect, Disconnect, SendData } from "../wailsjs/go/main/App"
-import saveIcon from './assets/icons/save.svg';
-import importIcon from './assets/icons/import.svg';
-import deleteIcon from './assets/icons/delete.svg';
+import { useState, useEffect, useRef } from "react";
+import productImage from "./assets/images/scribe-display.png";
+import textIcon from "./assets/icons/text.svg";
+import homeIcon from "./assets/icons/home.svg";
+import settingsIcon from "./assets/icons/settings.svg";
+import githubIcon from "./assets/icons/github.svg";
+import uploadIcon from "./assets/icons/upload.svg";
+import boldIcon from "./assets/icons/format-icons/bold.svg";
+import sizeUpIcon from "./assets/icons/format-icons/sizeup.svg";
+import sizeDownIcon from "./assets/icons/format-icons/sizedown.svg";
+import "./App.css"; // ← add this
+import { Connect, Disconnect, SendData } from "../wailsjs/go/main/App";
+import saveIcon from "./assets/icons/save.svg";
+import importIcon from "./assets/icons/import.svg";
+import deleteIcon from "./assets/icons/delete.svg";
 
 // Update the TEXT_CONTAINER to use relative percentages
 const TEXT_CONTAINER = {
@@ -26,253 +25,253 @@ const TEXT_CONTAINER = {
 
 const styles = {
   container: {
-    width: '100vw',
-    height: '100vh',
-    backgroundColor: 'black',
-    color: 'white',
-    display: 'flex',
-    flexDirection: 'column',
-    fontFamily: 'sans-serif',
-    position: 'relative',
-    overflow: 'hidden', // Disable scrollingMilitary. Signature, precisely. So you heard how stuff he is. See the bassist sound. Any reason? Yes. Navjot Sidhu wants to. I. So. You do all the time. Something as I'm getting in the country. 
-    userSelect: 'text', // Disable text selection/copying
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "black",
+    color: "white",
+    display: "flex",
+    flexDirection: "column",
+    fontFamily: "sans-serif",
+    position: "relative",
+    overflow: "hidden", // Disable scrollingMilitary. Signature, precisely. So you heard how stuff he is. See the bassist sound. Any reason? Yes. Navjot Sidhu wants to. I. So. You do all the time. Something as I'm getting in the country.
+    userSelect: "text", // Disable text selection/copying
   },
   header: {
-    padding: '0px 0 0 0 ', // Increased padding to make header taller
-    textAlign: 'center',
-    fontSize: '4rem',
-    fontFamily: 'Instrument Sans, sans-serif',
+    padding: "0px 0 0 0 ", // Increased padding to make header taller
+    textAlign: "center",
+    fontSize: "4rem",
+    fontFamily: "Instrument Sans, sans-serif",
     fontWeight: 700,
-    width: '100%',
-    position: 'relative',
+    width: "100%",
+    position: "relative",
     top: 0,
-    height: '120px', // Set fixed height
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: 'white',
+    height: "120px", // Set fixed height
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "white",
   },
   horizontalLine: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
-    height: '1px',
-    backgroundColor: '#333',
-    top: '120px', // Match header height
+    height: "1px",
+    backgroundColor: "#333",
+    top: "120px", // Match header height
     margin: 0,
     zIndex: 1,
   },
   mainContent: {
-    display: 'flex',
+    display: "flex",
     flex: 1,
   },
   sidebar: {
-    width: '120px', // Match vertical line width
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    height: 'calc(100% - 120px)', // Adjust for new header height
-    position: 'relative',
-    paddingTop: '150px',
+    width: "120px", // Match vertical line width
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    height: "calc(100% - 120px)", // Adjust for new header height
+    position: "relative",
+    paddingTop: "150px",
   },
   sidebarIconsContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '100px', // Increased gap between top icons
-    alignItems: 'center',
+    display: "flex",
+    flexDirection: "column",
+    gap: "100px", // Increased gap between top icons
+    alignItems: "center",
   },
   sidebarIcon: {
-    width: '34px', // Increased by 20%
-    height: '34px', // Increased by 20%
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    transition: 'transform 0.2s ease', // Add transition for hover effect
+    width: "34px", // Increased by 20%
+    height: "34px", // Increased by 20%
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    transition: "transform 0.2s ease", // Add transition for hover effect
   },
   githubIcon: {
-    position: 'absolute',
-    bottom: '70px',
-    left: '50%', // Center horizontally
-    transform: 'translateX(-50%)', // Center horizontally
-    width: '34px', // Increased by 20%
-    height: '34px', // Increased by 20%
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
+    position: "absolute",
+    bottom: "70px",
+    left: "50%", // Center horizontally
+    transform: "translateX(-50%)", // Center horizontally
+    width: "34px", // Increased by 20%
+    height: "34px", // Increased by 20%
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
   },
   verticalLine: {
-    position: 'absolute',
-    top: '0px', // Start from new header height
-    right: '-1px',
-    width: '1px',
-    height: 'calc(100vh - 120px)', // Adjust height based on new header
-    backgroundColor: '#333',
+    position: "absolute",
+    top: "0px", // Start from new header height
+    right: "-1px",
+    width: "1px",
+    height: "calc(100vh - 120px)", // Adjust height based on new header
+    backgroundColor: "#333",
     margin: 0,
   },
   textDisplay: {
     flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    padding: '0px',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: "0px",
   },
   displayContainer: {
-    position: 'relative',
-    width: '100%',
-    height: 'calc(100vh - 300px)',
-    minHeight: '400px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-end',
+    position: "relative",
+    width: "100%",
+    height: "calc(100vh - 300px)",
+    minHeight: "400px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
     margin: 0,
-    paddingRight: '0px', // Add padding for right alignment
-    gap: '20px',
+    paddingRight: "0px", // Add padding for right alignment
+    gap: "20px",
     zIndex: 1,
   },
   // Modify styles to use relative positioning
   imageContainer: {
-    position: 'relative',
-    width: '80%', // Match productImage width
-    maxWidth: '2000px', // Match productImage maxWidth
-    alignSelf: 'flex-end',
-    marginTop: '5%', // Add this line to move the container down
+    position: "relative",
+    width: "80%", // Match productImage width
+    maxWidth: "2000px", // Match productImage maxWidth
+    alignSelf: "flex-end",
+    marginTop: "5%", // Add this line to move the container down
   },
   productImage: {
-    width: '100%', // Take full width of container
-    height: 'auto',
-    display: 'block', // Removes extra space below image
+    width: "100%", // Take full width of container
+    height: "auto",
+    display: "block", // Removes extra space below image
   },
   // Modify styles to use relative positioning
   screenOverlay: {
-    position: 'absolute',
-    top: '47.8%', // Adjust these percentages to position correctly
-    left: '46.3%',
-    transform: 'translate(-50%, -50%)',
-    width: '53%', // Relative to image width
-    height: '72%', // Relative to image height
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center', // Center content vertically
-    color: 'white',
+    position: "absolute",
+    top: "47.8%", // Adjust these percentages to position correctly
+    left: "46.3%",
+    transform: "translate(-50%, -50%)",
+    width: "53%", // Relative to image width
+    height: "72%", // Relative to image height
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center", // Center content vertically
+    color: "white",
     //padding: `${TEXT_CONTAINER.padding}px`,
     zIndex: 2,
-    pointerEvents: 'none',
-    backgroundColor: 'transparent',
+    pointerEvents: "none",
+    backgroundColor: "transparent",
   },
   pageText: {
-    width: '100%',
-    height: '100%',
-    whiteSpace: 'pre-wrap',
-    wordWrap: 'break-word',
-    overflow: 'hidden',
-    textAlign: 'left',
+    width: "100%",
+    height: "100%",
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word",
+    overflow: "hidden",
+    textAlign: "left",
     // Font size will be set dynamically
   },
   // Modify styles to use relative positioning
   navigationOverlay: {
-    position: 'absolute',
-    top: '50%', // Changed for better vertical centering
-    transform: 'translateY(-50%)', // Added for better vertical centering
-    left: '0',
-    right: '0',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0 18% 0 10%', // Adjusted right padding to bring arrows closer
+    position: "absolute",
+    top: "50%", // Changed for better vertical centering
+    transform: "translateY(-50%)", // Added for better vertical centering
+    left: "0",
+    right: "0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "0 18% 0 10%", // Adjusted right padding to bring arrows closer
     zIndex: 3,
-    pointerEvents: 'none',
+    pointerEvents: "none",
   },
   arrow: {
-    fontSize: '4vw', // Use vw for responsive scaling with viewport width
-    color: 'black',
-    cursor: 'pointer',
-    userSelect: 'none',
-    pointerEvents: 'auto', // Re-enable clicks for arrows
+    fontSize: "4vw", // Use vw for responsive scaling with viewport width
+    color: "black",
+    cursor: "pointer",
+    userSelect: "none",
+    pointerEvents: "auto", // Re-enable clicks for arrows
   },
   inputSection: {
-    width: '80%',
-    display: 'flex',
-    flexDirection: 'column', // Stack elements vertically
-    gap: '15px',
-    alignItems: 'center',
-    marginTop: '100px', // Move up
-    position: 'relative',
+    width: "80%",
+    display: "flex",
+    flexDirection: "column", // Stack elements vertically
+    gap: "15px",
+    alignItems: "center",
+    marginTop: "100px", // Move up
+    position: "relative",
     zIndex: 4, // Ensure input section is above overlays
   },
   inputRow: {
-    display: 'flex',
-    gap: '20px',
-    alignItems: 'center',
-    width: '100%',
+    display: "flex",
+    gap: "20px",
+    alignItems: "center",
+    width: "100%",
   },
   input: {
     flex: 1,
-    padding: '15px',
-    borderRadius: '25px',
-    backgroundColor: '#111',
-    border: '1px solid #333',
-    color: 'white',
-    fontSize: '16px',
-    userSelect: 'text', // Enable text selection
-    cursor: 'text', // Show text cursor
+    padding: "15px",
+    borderRadius: "25px",
+    backgroundColor: "#111",
+    border: "1px solid #333",
+    color: "white",
+    fontSize: "16px",
+    userSelect: "text", // Enable text selection
+    cursor: "text", // Show text cursor
   },
   formatButtons: {
-    display: 'flex',
-    justifyContent: 'space-between', // This will push groups to opposite ends
-    width: '100%', // Match parent width (same as input row)
-    alignSelf: 'stretch', // Take full width of parent
-    marginTop: '1%',
+    display: "flex",
+    justifyContent: "space-between", // This will push groups to opposite ends
+    width: "100%", // Match parent width (same as input row)
+    alignSelf: "stretch", // Take full width of parent
+    marginTop: "1%",
   },
   formatButton: {
-    width: '64px', // Increased size
-    height: '64px', // Increased size
-    borderRadius: '15px',
-    backgroundColor: '#111',
-    border: '1px solid #333',
-    padding: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    transition: 'transform 0.2s ease', // Add transition for hover effect
-    '&:hover': {
-      transform: 'scale(1.1)', // 10% size increase on hover
-    }
+    width: "64px", // Increased size
+    height: "64px", // Increased size
+    borderRadius: "15px",
+    backgroundColor: "#111",
+    border: "1px solid #333",
+    padding: "20px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    transition: "transform 0.2s ease", // Add transition for hover effect
+    "&:hover": {
+      transform: "scale(1.1)", // 10% size increase on hover
+    },
   },
   sendButton: {
-    padding: '15px 30px',
-    borderRadius: '25px',
-    backgroundColor: '#111',
-    border: '1px solid #333',
-    color: 'white',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
+    padding: "15px 30px",
+    borderRadius: "25px",
+    backgroundColor: "#111",
+    border: "1px solid #333",
+    color: "white",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
   },
   uploadIconStyle: {
-    width: '16px', // Smaller upload icon
-    height: '16px',
+    width: "16px", // Smaller upload icon
+    height: "16px",
     padding: 0,
   },
 };
 
 const iconStyle = {
-  width: '100%',
-  height: '100%',
-  padding: '2px',
+  width: "100%",
+  height: "100%",
+  padding: "2px",
 };
 
 // Add this constant for the max line length
 const MAX_LINE_LENGTH = 21;
-const MANUAL_BREAK_MARKER = '\n'; // Changed from '\u200B' to '\n'
+const MANUAL_BREAK_MARKER = "\n"; // Changed from '\u200B' to '\n'
 
 function App() {
-  const [inputText, setInputText] = useState('');
-  const [fontSize, setFontSize] = useState(24); 
+  const [inputText, setInputText] = useState("");
+  const [fontSize, setFontSize] = useState(24);
   const [fontSizeMultiplier, setFSMultiplier] = useState(1);
   const [pages, setPages] = useState([[]]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -280,9 +279,9 @@ function App() {
   const [showProgress, setShowProgress] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploadComplete, setUploadComplete] = useState(false);
-  const [pageInputs, setPageInputs] = useState(['']); // Store raw input text for each page
+  const [pageInputs, setPageInputs] = useState([""]); // Store raw input text for each page
   const [manualBreaks, setManualBreaks] = useState([[]]); // Array of arrays of break indices
-  const displayAreaRef = useRef(null)
+  const displayAreaRef = useRef(null);
 
   useEffect(() => {
     if (!displayAreaRef) return;
@@ -290,7 +289,7 @@ function App() {
     const resizeObserver = new ResizeObserver((entries) => {
       for (let entry of entries) {
         if (entry.contentBoxSize) {
-          setFontSize(entry.contentRect.width / 13)
+          setFontSize(entry.contentRect.width / 13);
         }
       }
     });
@@ -300,42 +299,44 @@ function App() {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [])
+  }, []);
 
   // Break text at container boundaries, grouping into pages of max 4 lines
   const formatText = (text) => {
-    if (!text) return [['Your Text Will Appear Here!']];
-    
-    const paragraphs = text.split('\n');
+    if (!text) return [["Your Text Will Appear Here!"]];
+
+    const paragraphs = text.split("\n");
     const lines = [];
-    
-    const measureEl = document.createElement('div');
-    measureEl.style.position = 'absolute';
-    measureEl.style.visibility = 'hidden';
+
+    const measureEl = document.createElement("div");
+    measureEl.style.position = "absolute";
+    measureEl.style.visibility = "hidden";
     // Ensure fontSize is applied correctly, potentially using a state variable if it changes
     // For example, if you have a state `currentFontSize`
-    measureEl.style.fontSize = `${fontSize * fontSizeMultiplier}px`; 
-    measureEl.style.fontFamily = 'sans-serif'; // Or your specific preview font
-    measureEl.style.whiteSpace = 'nowrap';
+    measureEl.style.fontSize = `${fontSize * fontSizeMultiplier}px`;
+    measureEl.style.fontFamily = "sans-serif"; // Or your specific preview font
+    measureEl.style.whiteSpace = "nowrap";
     document.body.appendChild(measureEl);
-    
+
     // Calculate maxWidth based on the displayAreaRef (preview area)
     // and TEXT_CONTAINER.widthPercent
     let maxWidth = 300; // Default or fallback width
     if (displayAreaRef.current) {
       const previewContainerWidth = displayAreaRef.current.offsetWidth;
-      maxWidth = (previewContainerWidth * (TEXT_CONTAINER.widthPercent / 100)) - (TEXT_CONTAINER.padding * 2);
+      maxWidth =
+        previewContainerWidth * (TEXT_CONTAINER.widthPercent / 100) -
+        TEXT_CONTAINER.padding * 2;
     }
-    
-    paragraphs.forEach(paragraph => {
-      if (paragraph === '') {
-        lines.push(''); // Add an empty line for explicit newlines
+
+    paragraphs.forEach((paragraph) => {
+      if (paragraph === "") {
+        lines.push(""); // Add an empty line for explicit newlines
         return;
       }
-      
-      const words = paragraph.split(' ');
-      let currentLine = '';
-      
+
+      const words = paragraph.split(" ");
+      let currentLine = "";
+
       for (const word of words) {
         const testLine = currentLine ? `${currentLine} ${word}` : word;
         measureEl.textContent = testLine;
@@ -350,14 +351,14 @@ function App() {
         lines.push(currentLine);
       }
     });
-    
+
     document.body.removeChild(measureEl);
-    
+
     const result = [];
     for (let i = 0; i < lines.length; i += TEXT_CONTAINER.maxLines) {
       result.push(lines.slice(i, i + TEXT_CONTAINER.maxLines));
     }
-    return result.length ? result : [['Your Text Will Appear Here!']];
+    return result.length ? result : [["Your Text Will Appear Here!"]];
   };
 
   // Recompute pages when inputText or fontSize changes
@@ -366,7 +367,7 @@ function App() {
     const newPageInputs = [...pageInputs];
     newPageInputs[currentPage] = inputText;
     setPageInputs(newPageInputs);
-    
+
     // Update only the current page in the pages array
     const newPages = [...pages];
     newPages[currentPage] = formatText(inputText)[0]; // Format just the current page text
@@ -374,11 +375,11 @@ function App() {
   }, [inputText, fontSize]);
 
   const increaseFontSize = () => {
-    setFSMultiplier((prev) => prev === 3 ? prev : prev + 1)
+    setFSMultiplier((prev) => (prev === 3 ? prev : prev + 1));
   };
 
   const decreaseFontSize = () => {
-    setFSMultiplier((prev) => prev === 1 ? 1 : prev - 1)
+    setFSMultiplier((prev) => (prev === 1 ? 1 : prev - 1));
   };
 
   // Update the navigation handlers
@@ -387,13 +388,13 @@ function App() {
     const newPageInputs = [...pageInputs];
     newPageInputs[currentPage] = inputText;
     setPageInputs(newPageInputs);
-    
+
     // Navigate to previous page with cycling
     const prevPage = currentPage > 0 ? currentPage - 1 : pages.length - 1;
     setCurrentPage(prevPage);
-    
+
     // Update input field with previous page's content
-    setInputText(pageInputs[prevPage] || '');
+    setInputText(pageInputs[prevPage] || "");
   };
 
   const handleNextPage = () => {
@@ -401,41 +402,42 @@ function App() {
     const newPageInputs = [...pageInputs];
     newPageInputs[currentPage] = inputText;
     setPageInputs(newPageInputs);
-    
+
     // Check if we're on the last page
     if (currentPage === pages.length - 1) {
       // Check if current page has actual text content
-      const hasContent = pages[currentPage][0] !== 'Your Text Will Appear Here!' && 
-                         pages[currentPage].length > 0 && 
-                         pages[currentPage][0] !== '';
-      
+      const hasContent =
+        pages[currentPage][0] !== "Your Text Will Appear Here!" &&
+        pages[currentPage].length > 0 &&
+        pages[currentPage][0] !== "";
+
       if (hasContent) {
         // Clone the pages array and add a new blank page
         const newPages = [...pages];
-        newPages.push(['']);
+        newPages.push([""]);
         setPages(newPages);
-        
+
         // Add new empty entry to pageInputs
         const updatedPageInputs = [...newPageInputs];
-        updatedPageInputs.push('');
+        updatedPageInputs.push("");
         setPageInputs(updatedPageInputs);
-        
+
         // Move to the new page
         const nextPage = currentPage + 1;
         setCurrentPage(nextPage);
-        
+
         // Clear input field for the new blank page
-        setInputText('');
+        setInputText("");
       } else {
         // If on last page with no content, cycle to first page
         setCurrentPage(0);
-        setInputText(pageInputs[0] || '');
+        setInputText(pageInputs[0] || "");
       }
     } else {
       // Just navigate to the next existing page
       const nextPage = currentPage + 1;
       setCurrentPage(nextPage);
-      setInputText(pageInputs[nextPage] || '');
+      setInputText(pageInputs[nextPage] || "");
     }
   };
 
@@ -463,7 +465,7 @@ function App() {
 
   // Format text for preview and sending (applies breaks)
   const getFormattedLines = (text) => {
-    if (!text) return ['Your Text Will Appear Here!'];
+    if (!text) return ["Your Text Will Appear Here!"];
     let lines = [];
     let segments = text.split(MANUAL_BREAK_MARKER);
 
@@ -475,7 +477,7 @@ function App() {
       lines.push(segment);
     }
     // Ensure 4 lines per page
-    while (lines.length < 4) lines.push('');
+    while (lines.length < 4) lines.push("");
     return lines.slice(0, 4);
   };
 
@@ -491,22 +493,24 @@ function App() {
 
   async function send() {
     const connected = await Connect();
+
     if (connected) {
-      // Get all lines from all pages, each page is 4 lines
       const allLines = getAllFormattedLines();
+
       // Join with '\n' to ensure a break after every line (including after every 4th line)
-      const sendString = allLines.join('\n');
+      const sendString = allLines.join("\n");
       const sent = await SendData(sendString);
       if (!sent) {
-        console.log("pruser");
+        console.log("Failed to send pages to SCRIBE");
       }
+
       await Disconnect();
     }
   }
 
   // Handle the send button click
   const handleSend = () => {
-    send()
+    send();
     setProgress(0);
     setUploadComplete(false);
     setShowProgress(true);
@@ -549,7 +553,7 @@ function App() {
     if (lines.length > 4) {
       lines = lines.slice(0, 4);
       // Rebuild text with markers
-      let rebuilt = '';
+      let rebuilt = "";
       let charCount = 0;
       for (let i = 0; i < segments.length && charCount < 4; i++) {
         let seg = segments[i];
@@ -561,16 +565,17 @@ function App() {
         if (charCount < 4) {
           rebuilt += seg;
           charCount++;
-          if (i < segments.length - 1 && charCount < 4) rebuilt += MANUAL_BREAK_MARKER;
+          if (i < segments.length - 1 && charCount < 4)
+            rebuilt += MANUAL_BREAK_MARKER;
         }
       }
       newText = rebuilt;
     } else if (lines.length === 4 && lines[3].length > MAX_LINE_LENGTH) {
       // Prevent typing more than 21 chars on the 4th line
       lines[3] = lines[3].slice(0, MAX_LINE_LENGTH);
-      newText = lines.slice(0, 4).join('');
+      newText = lines.slice(0, 4).join("");
       // Add back manual breaks
-      let rebuilt = '';
+      let rebuilt = "";
       let idx = 0;
       for (let s of segments) {
         if (idx >= 4) break;
@@ -591,36 +596,36 @@ function App() {
       // Create a JSON representation of all pages with their breaks
       const dataToSave = {
         pages: pageInputs,
-        version: "1.0"
+        version: "1.0",
       };
-      
+
       // Generate a filename based on the first line of text
-      let filenameBase = '';
+      let filenameBase = "";
       if (pageInputs.length > 0 && pageInputs[0]) {
         // Get first line of text (before any line break or manual break)
-        const firstLine = pageInputs[0].split(/[\n]/)[0] || '';
-        
+        const firstLine = pageInputs[0].split(/[\n]/)[0] || "";
+
         // Clean the filename: remove invalid characters, limit length
         filenameBase = firstLine
           .trim()
-          .replace(/[^\w\s-]/g, '') // Remove special characters
-          .replace(/\s+/g, '-')     // Replace spaces with hyphens
-          .slice(0, 30);            // Limit length
+          .replace(/[^\w\s-]/g, "") // Remove special characters
+          .replace(/\s+/g, "-") // Replace spaces with hyphens
+          .slice(0, 30); // Limit length
       }
-      
+
       // Use a default name if empty or just use timestamp
       if (!filenameBase) {
         filenameBase = `scribe-${new Date().toISOString().slice(0, 10)}`;
       }
-      
+
       const filename = `${filenameBase}-scribe.json`;
-      
+
       const jsonString = JSON.stringify(dataToSave, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      
+      const blob = new Blob([jsonString], { type: "application/json" });
+
       // Create a download link and trigger it
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
@@ -632,37 +637,37 @@ function App() {
       // You could add a user-friendly error message here
     }
   };
-  
+
   const handleImportFile = () => {
     try {
       // Create a file input element and trigger it
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = '.json';
-      
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = ".json";
+
       fileInput.onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         const reader = new FileReader();
         reader.onload = (event) => {
           try {
             const importedData = JSON.parse(event.target.result);
-            
+
             // Validate the imported data has the expected structure
             if (importedData && Array.isArray(importedData.pages)) {
               // Update the state with imported pages
               setPageInputs(importedData.pages);
-              
+
               // Generate pages data from imported page inputs
-              const newPages = importedData.pages.map(pageText => 
-                formatText(pageText)[0]
+              const newPages = importedData.pages.map(
+                (pageText) => formatText(pageText)[0],
               );
               setPages(newPages);
-              
+
               // Reset to first page and update input text
               setCurrentPage(0);
-              setInputText(importedData.pages[0] || '');
+              setInputText(importedData.pages[0] || "");
             } else {
               console.error("Invalid file format");
               // You could add a user-friendly error message here
@@ -674,7 +679,7 @@ function App() {
         };
         reader.readAsText(file);
       };
-      
+
       fileInput.click();
     } catch (error) {
       console.error("Failed to import file:", error);
@@ -685,19 +690,21 @@ function App() {
   // Add this function with your other handler functions
   const handleClearPage = () => {
     // Clear the input text
-    setInputText('');
-    
+    setInputText("");
+
     // Reset to a single empty page
-    setPageInputs(['']);
-    setPages([['']]);
-    
+    setPageInputs([""]);
+    setPages([[""]]);
+
     // Go back to the first page
     setCurrentPage(0);
   };
 
   return (
     <div style={styles.container}>
-      <header style={styles.header} className="header-text">scribe</header>
+      <header style={styles.header} className="header-text">
+        scribe
+      </header>
       <div style={styles.horizontalLine} />
       <div style={styles.mainContent}>
         <div style={styles.sidebar}>
@@ -705,14 +712,21 @@ function App() {
             <div style={styles.sidebarIcon} className="sidebar-icon">
               <img src={textIcon} alt="Text" style={iconStyle} />
             </div>
-            <div style={styles.sidebarIcon} className="sidebar-icon">  {/* add className */}
+            <div style={styles.sidebarIcon} className="sidebar-icon">
+              {" "}
+              {/* add className */}
               <img src={homeIcon} alt="Home" style={iconStyle} />
             </div>
-            <div style={styles.sidebarIcon} className="sidebar-icon">  {/* add className */}
+            <div style={styles.sidebarIcon} className="sidebar-icon">
+              {" "}
+              {/* add className */}
               <img src={settingsIcon} alt="Settings" style={iconStyle} />
             </div>
           </div>
-          <a href="https://github.com/AthemiS13/scribe-app" style={styles.githubIcon}>
+          <a
+            href="https://github.com/AthemiS13/scribe-app"
+            style={styles.githubIcon}
+          >
             <img src={githubIcon} alt="GitHub" style={iconStyle} />
           </a>
           <div style={styles.verticalLine} />
@@ -737,8 +751,12 @@ function App() {
               </div>
             </div>
             <div style={styles.navigationOverlay}>
-              <span style={styles.arrow} onClick={handlePrevPage}>&lt;</span>
-              <span style={styles.arrow} onClick={handleNextPage}>&gt;</span>
+              <span style={styles.arrow} onClick={handlePrevPage}>
+                &lt;
+              </span>
+              <span style={styles.arrow} onClick={handleNextPage}>
+                &gt;
+              </span>
             </div>
           </div>
 
@@ -749,47 +767,62 @@ function App() {
                 type="text"
                 placeholder="Type Here!"
                 style={styles.input}
-                value={inputText.replace(/\n/g, '-')}
+                value={inputText.replace(/\n/g, "-")}
                 onChange={handleInputChange}
                 onKeyDown={handleInputKeyDown}
               />
-              <button
-                className="send-button"
-                onClick={handleSend}
-              >
+              <button className="send-button" onClick={handleSend}>
                 <span>Send</span>
-                <img src={uploadIcon} alt="Upload" style={styles.uploadIconStyle} />
+                <img
+                  src={uploadIcon}
+                  alt="Upload"
+                  style={styles.uploadIconStyle}
+                />
               </button>
             </div>
             <div style={styles.formatButtons}>
               {/* Left group - format buttons */}
-              <div style={{ display: 'flex', gap: '20px' }}>
+              <div style={{ display: "flex", gap: "20px" }}>
                 <button
                   style={styles.formatButton}
                   onClick={increaseFontSize}
                   className="format-button"
                 >
-                  <img src={sizeUpIcon} alt="Size Up" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                  <img
+                    src={sizeUpIcon}
+                    alt="Size Up"
+                    style={{ width: "100%", height: "100%", padding: "2px" }}
+                  />
                 </button>
                 <button
                   style={styles.formatButton}
                   onClick={decreaseFontSize}
                   className="format-button"
                 >
-                  <img src={sizeDownIcon} alt="Size Down" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                  <img
+                    src={sizeDownIcon}
+                    alt="Size Down"
+                    style={{ width: "100%", height: "100%", padding: "2px" }}
+                  />
                 </button>
                 <button style={styles.formatButton} className="format-button">
-                  <img src={boldIcon} alt="Bold" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                  <img
+                    src={boldIcon}
+                    alt="Bold"
+                    style={{ width: "100%", height: "100%", padding: "2px" }}
+                  />
                 </button>
                 {/* Removed the italic/manual break button */}
               </div>
-              
+
               {/* Right group - import/export buttons */}
-              <div style={{ 
-                display: 'flex', 
-                gap: '20px',
-                marginRight: '150px' // This shifts the buttons to the left by approximately the width of the send button + gap
-              }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "20px",
+                  marginRight: "150px", // This shifts the buttons to the left by approximately the width of the send button + gap
+                }}
+              >
                 {/* New delete button */}
                 <button
                   style={styles.formatButton}
@@ -798,9 +831,13 @@ function App() {
                   type="button"
                   title="Clear Page"
                 >
-                  <img src={deleteIcon} alt="Delete" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                  <img
+                    src={deleteIcon}
+                    alt="Delete"
+                    style={{ width: "100%", height: "100%", padding: "2px" }}
+                  />
                 </button>
-                
+
                 <button
                   style={styles.formatButton}
                   className="format-button"
@@ -808,9 +845,13 @@ function App() {
                   type="button"
                   title="Save to File"
                 >
-                  <img src={saveIcon} alt="Save" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                  <img
+                    src={saveIcon}
+                    alt="Save"
+                    style={{ width: "100%", height: "100%", padding: "2px" }}
+                  />
                 </button>
-                
+
                 <button
                   style={styles.formatButton}
                   className="format-button"
@@ -818,7 +859,11 @@ function App() {
                   type="button"
                   title="Import from File"
                 >
-                  <img src={importIcon} alt="Import" style={{ width: '100%', height: '100%', padding: '2px' }} />
+                  <img
+                    src={importIcon}
+                    alt="Import"
+                    style={{ width: "100%", height: "100%", padding: "2px" }}
+                  />
                 </button>
               </div>
             </div>
