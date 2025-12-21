@@ -5,7 +5,6 @@ package ble
 import (
 	"encoding/binary"
 	"fmt"
-	"os/exec"
 	"strings"
 	"sync"
 	"time"
@@ -21,37 +20,39 @@ const (
 	scribeDataTransferVersion    = uint8(1)
 )
 
-// MacOSBLEBackend implements BLEBackend for macOS using TinyGo bluetooth with macOS optimizations
+// STATUS_CODES from firmware
+const (
+	STATUS_READY = 0x01
+	STATUS_DONE  = 0x02
+)
+
+// MacOSBLEBackend implements BLEBackend for macOS using TinyGo bluetooth with notifications
 type MacOSBLEBackend struct {
-	adapter          *bluetooth.Adapter
-	connectedDevice  *bluetooth.Device
-	dataChar         *bluetooth.DeviceCharacteristic
-	infoChar         *bluetooth.DeviceCharacteristic
-	deviceInfo       *DeviceInfo
-	mutex            sync.RWMutex
-	lastConnectTime  time.Time
-	consecutiveSends int
+	adapter         *bluetooth.Adapter
+	connectedDevice *bluetooth.Device
+	dataChar        *bluetooth.DeviceCharacteristic
+	infoChar        *bluetooth.DeviceCharacteristic
+	deviceInfo      *DeviceInfo
+
+	statusChan chan uint8
+	mutex      sync.RWMutex
 }
 
 // NewMacOSBLEBackend creates a new macOS BLE backend
 func NewMacOSBLEBackend() *MacOSBLEBackend {
-	return &MacOSBLEBackend{}
+	return &MacOSBLEBackend{
+		statusChan: make(chan uint8, 10),
+	}
 }
 
 // Initialize initializes the BLE adapter
 func (m *MacOSBLEBackend) Initialize() error {
-	// Check if blueutil is available (helpful for macOS BLE management)
-	_, err := exec.LookPath("blueutil")
-	if err != nil {
-		fmt.Println("Info: blueutil not found. Consider installing with: brew install blueutil")
-	}
-
 	m.adapter = bluetooth.DefaultAdapter
 	if m.adapter == nil {
 		return ErrAdapterNotFound
 	}
 
-	err = m.adapter.Enable()
+	err := m.adapter.Enable()
 	if err != nil {
 		return fmt.Errorf("failed to enable BLE adapter on macOS: %v", err)
 	}
@@ -117,9 +118,10 @@ func (m *MacOSBLEBackend) Connect(deviceAddress string) error {
 	ch := make(chan bluetooth.ScanResult, 1)
 	var scanErr error
 
+	// Short scan to energize the adapter and find the peripheral
 	go func() {
 		err := m.adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
-			if device.LocalName() == "SCRIBE" && device.Address.String() == deviceAddress {
+			if device.Address.String() == deviceAddress {
 				adapter.StopScan()
 				ch <- device
 			}
@@ -132,8 +134,8 @@ func (m *MacOSBLEBackend) Connect(deviceAddress string) error {
 	var scanResult bluetooth.ScanResult
 	select {
 	case scanResult = <-ch:
-		// Found the device
-	case <-time.After(10 * time.Second):
+		// Found
+	case <-time.After(5 * time.Second):
 		m.adapter.StopScan()
 		if scanErr != nil {
 			return scanErr
@@ -141,7 +143,6 @@ func (m *MacOSBLEBackend) Connect(deviceAddress string) error {
 		return ErrDeviceNotFound
 	}
 
-	// Connect with macOS-optimized parameters
 	device, err := m.adapter.Connect(scanResult.Address, bluetooth.ConnectionParams{
 		ConnectionTimeout: bluetooth.NewDuration(10 * time.Second),
 	})
@@ -149,7 +150,7 @@ func (m *MacOSBLEBackend) Connect(deviceAddress string) error {
 		return fmt.Errorf("macOS connection failed: %v", err)
 	}
 
-	// Discover SCRIBE service
+	// Discover Services
 	serviceID, err := bluetooth.ParseUUID(scribeServiceUUID)
 	if err != nil {
 		return err
@@ -157,7 +158,7 @@ func (m *MacOSBLEBackend) Connect(deviceAddress string) error {
 
 	services, err := device.DiscoverServices([]bluetooth.UUID{serviceID})
 	if err != nil {
-		return fmt.Errorf("service discovery failed on macOS: %v", err)
+		return fmt.Errorf("service discovery failed: %v", err)
 	}
 
 	if len(services) == 0 {
@@ -166,12 +167,11 @@ func (m *MacOSBLEBackend) Connect(deviceAddress string) error {
 
 	service := services[0]
 
-	// Discover SCRIBE characteristics
+	// Discover Characteristics
 	dataCharUUID, err := bluetooth.ParseUUID(scribeDataCharacteristicUUID)
 	if err != nil {
 		return err
 	}
-
 	infoCharUUID, err := bluetooth.ParseUUID(scribeInfoCharacteristicUUID)
 	if err != nil {
 		return err
@@ -179,36 +179,51 @@ func (m *MacOSBLEBackend) Connect(deviceAddress string) error {
 
 	chars, err := service.DiscoverCharacteristics([]bluetooth.UUID{dataCharUUID, infoCharUUID})
 	if err != nil {
-		return fmt.Errorf("characteristic discovery failed on macOS: %v", err)
+		return fmt.Errorf("characteristic discovery failed: %v", err)
 	}
 
 	if len(chars) != 2 {
 		return fmt.Errorf("SCRIBE characteristics not found (found %d, expected 2)", len(chars))
 	}
 
-	// Assign characteristics based on UUID (case-insensitive comparison)
+	m.mutex.Lock()
+	m.connectedDevice = &device
+
+	// Assign chars
 	for _, char := range chars {
-		charUUID := strings.ToUpper(char.UUID().String())
-		if charUUID == strings.ToUpper(scribeDataCharacteristicUUID) {
-			m.dataChar = &char
-			fmt.Printf("Found data characteristic: %s\n", char.UUID().String())
-		} else if charUUID == strings.ToUpper(scribeInfoCharacteristicUUID) {
-			m.infoChar = &char
-			fmt.Printf("Found info characteristic: %s\n", char.UUID().String())
+		if strings.EqualFold(char.UUID().String(), scribeDataCharacteristicUUID) {
+			c := char
+			m.dataChar = &c
+		} else if strings.EqualFold(char.UUID().String(), scribeInfoCharacteristicUUID) {
+			c := char
+			m.infoChar = &c
 		}
 	}
+	m.mutex.Unlock()
 
 	if m.dataChar == nil || m.infoChar == nil {
 		return fmt.Errorf("failed to identify SCRIBE characteristics")
 	}
 
-	m.mutex.Lock()
-	m.connectedDevice = &device
-	m.lastConnectTime = time.Now()
-	m.consecutiveSends = 0
-	m.mutex.Unlock()
+	// Enable Notifications on InfoChar for flow control
+	fmt.Println("Enabling notifications on Info Characteristic...")
+	err = m.infoChar.EnableNotifications(func(buf []byte) {
+		if len(buf) > 0 {
+			msg := buf[0]
+			fmt.Printf("🔔 NOTIFICATION RECEIVED: 0x%02x\n", msg)
+			// Non-blocking send to channel
+			select {
+			case m.statusChan <- msg:
+			default:
+				fmt.Println("⚠️ Status channel full, dropping notification")
+			}
+		}
+	})
+	if err != nil {
+		fmt.Printf("Warning: Failed to enable notifications: %v. Flow control may fail.\n", err)
+	}
 
-	fmt.Println("Successfully connected to SCRIBE on macOS")
+	fmt.Println("Successfully connected to SCRIBE on macOS with Notification support")
 	return nil
 }
 
@@ -221,215 +236,136 @@ func (m *MacOSBLEBackend) Disconnect() error {
 		return ErrNotConnected
 	}
 
-	fmt.Println("Disconnecting from SCRIBE on macOS...")
+	fmt.Println("Disconnecting from SCRIBE...")
+
+	// Drain channel
+Loop:
+	for {
+		select {
+		case <-m.statusChan:
+		default:
+			break Loop
+		}
+	}
 
 	err := m.connectedDevice.Disconnect()
-
-	// Clear references regardless of error
 	m.connectedDevice = nil
 	m.dataChar = nil
 	m.infoChar = nil
 	m.deviceInfo = nil
-	m.consecutiveSends = 0
-
 	return err
 }
 
-// IsConnected returns true if currently connected to a device
+// IsConnected returns true if currently connected
 func (m *MacOSBLEBackend) IsConnected() bool {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
-
-	return m.connectedDevice != nil && m.dataChar != nil && m.infoChar != nil
+	return m.connectedDevice != nil
 }
 
-// SendData sends data to the connected device using SCRIBE protocol with macOS optimizations
+// SendData sends data using robust flow control
 func (m *MacOSBLEBackend) SendData(data string) error {
 	if !m.IsConnected() {
 		return ErrNotConnected
 	}
 
-	m.mutex.Lock()
-	m.consecutiveSends++
-	sendCount := m.consecutiveSends
-	timeSinceConnect := time.Since(m.lastConnectTime)
-	m.mutex.Unlock()
-
-	fmt.Printf("\n🔵 === SCRIBE TRANSMISSION #%d (Connected for: %v) ===\n", sendCount, timeSinceConnect.Round(time.Second))
-	fmt.Printf("🔵 DEBUG: Starting SendData - data length: %d bytes\n", len(data))
-	fmt.Printf("🔵 DEBUG: Connection status - Device: %p, DataChar: %p, InfoChar: %p\n", m.connectedDevice, m.dataChar, m.infoChar)
-
-	// Send info packet first (SCRIBE protocol)
-	infoData := m.createInfoPacket(uint16(len(data)))
-	fmt.Printf("🔵 DEBUG: About to send info packet - size: %d bytes\n", len(infoData))
-	fmt.Printf("🔵 DEBUG: Info packet bytes: %v\n", infoData)
-	fmt.Printf("🔵 DEBUG: Info packet hex: ")
-	for _, b := range infoData {
-		fmt.Printf("%02x ", b)
+	// clear channel before starting
+Loop:
+	for {
+		select {
+		case <-m.statusChan:
+		default:
+			break Loop
+		}
 	}
-	fmt.Println()
 
-	start := time.Now()
-	_, err := m.infoChar.WriteWithoutResponse(infoData)
-	duration := time.Since(start)
+	dataLen := len(data)
+	fmt.Printf("🔵 STARTING TRANSMISSION: %d bytes\n", dataLen)
 
+	// 1. Send Info Packet
+	infoData := m.createInfoPacket(uint16(dataLen))
+	fmt.Printf("➡️ Sending Info Packet (expecting READY signal)...\n")
+	// Use Write (confirmed) for the Info packet to ensure handshake starts correctly
+	_, err := m.infoChar.Write(infoData)
 	if err != nil {
-		fmt.Printf("🔴 ERROR: Info packet send failed after %v: %v\n", duration, err)
 		return fmt.Errorf("failed to send info packet: %v", err)
 	}
 
-	fmt.Printf("🟢 SUCCESS: Info packet sent in %v - [version=%d, font=%d, size=%d]\n", duration, infoData[0], infoData[1], binary.LittleEndian.Uint16(infoData[2:])) // macOS-specific: Longer delay for info packet processing
-	// macOS BLE stack needs more time to handle characteristic writes
-	fmt.Printf("🔵 DEBUG: Starting 250ms info packet processing delay...\n")
-	delayStart := time.Now()
-	time.Sleep(250 * time.Millisecond)
-	fmt.Printf("🔵 DEBUG: Info packet delay completed in %v\n", time.Since(delayStart))
-
-	// macOS-specific adaptive chunking strategy
-	fmt.Printf("🔵 DEBUG: Calling sendDataWithMacOSOptimizations...\n")
-	err = m.sendDataWithMacOSOptimizations(data)
-	if err != nil {
-		return err
-	}
-
-	// Warn about potential firmware state issues after multiple consecutive sends
-	if sendCount >= 3 {
-		fmt.Printf("⚠️  WARNING: This is transmission #%d without disconnecting.\n", sendCount)
-		fmt.Println("⚠️  SCRIBE firmware may be in an unstable state. Consider disconnecting/reconnecting.")
-	}
-
-	fmt.Printf("Data sent successfully to SCRIBE via macOS BLE (Total transmissions: %d)\n", sendCount)
-	return nil
-}
-
-// sendDataWithMacOSOptimizations implements macOS-specific BLE data transmission
-// FIXED: Addresses race condition where ESP32 completes processing before all chunks arrive
-func (m *MacOSBLEBackend) sendDataWithMacOSOptimizations(data string) error {
-	fmt.Printf("\n🟡 === ENTERING sendDataWithMacOSOptimizations (RACE CONDITION FIX) ===\n")
-
-	dataLen := len(data)
-	fmt.Printf("🟡 DEBUG: Data length: %d bytes\n", dataLen)
-	fmt.Printf("🟡 DEBUG: Data preview: %q\n", func() string {
-		if len(data) > 50 {
-			return data[:50] + "..."
+	// 2. Wait for READY (0x01)
+	// We might have old 0x02s floating around, so we should be specific
+WaitReady:
+	for {
+		select {
+		case status := <-m.statusChan:
+			if status == STATUS_READY {
+				fmt.Println("✅ RECEIVED READY SIGNAL (0x01)")
+				break WaitReady
+			} else {
+				fmt.Printf("⚠️ Ignoring unexpected status while waiting for READY: 0x%02x\n", status)
+			}
+		case <-time.After(5 * time.Second):
+			return fmt.Errorf("timeout waiting for READY signal from Scribe")
 		}
-		return data
-	}())
+	}
 
-	// CRITICAL FIX: Use single-phase transmission with consistent timing
-	// The race condition occurs because ESP32 processes data before all chunks arrive
-	// Solution: Uniform chunk size and aggressive delays to ensure proper sequencing
-
-	chunkSize := 18                          // Conservative chunk size for macOS BLE reliability
-	interChunkDelay := 25 * time.Millisecond // INCREASED: Prevent ESP32 race condition
-
-	fmt.Printf("� FIXED: Single-phase transmission (%d bytes, %d-byte chunks, %v delays)\n",
-		dataLen, chunkSize, interChunkDelay)
-
+	// 3. Send Data Chunks
+	// CRITICAL: WriteWithoutResponse + 30ms Pacing to avoid Duplicates (Retries) and Drops (Overflow)
+	chunkSize := 18 // Reduced Chunk Size
 	totalChunks := (dataLen + chunkSize - 1) / chunkSize
-	fmt.Printf("🟡 DEBUG: Will send %d total chunks\n", totalChunks)
+
+	fmt.Printf("➡️ Sending %d chunks...\n", totalChunks)
 
 	for i := 0; i < dataLen; i += chunkSize {
 		end := i + chunkSize
 		if end > dataLen {
 			end = dataLen
 		}
-
-		chunkNum := (i / chunkSize) + 1
 		chunk := []byte(data[i:end])
 
-		fmt.Printf("🟡 DEBUG: Sending chunk %d/%d [%d-%d] (%d bytes)\n",
-			chunkNum, totalChunks, i, end-1, len(chunk))
-		fmt.Printf("🟡 DEBUG: Chunk string: %q\n", string(chunk))
-		fmt.Printf("🟡 DEBUG: Chunk bytes: %v\n", chunk)
-		fmt.Printf("🟡 DEBUG: Chunk hex: ")
-		for _, b := range chunk {
-			fmt.Printf("%02x ", b)
-		}
-		fmt.Println()
-		fmt.Printf("🟡 DEBUG: Character analysis: ")
-		for _, b := range chunk {
-			if b == '\n' {
-				fmt.Print("\\n ")
-			} else if b == '\r' {
-				fmt.Print("\\r ")
-			} else if b == '\t' {
-				fmt.Print("\\t ")
-			} else if b < 32 || b > 126 {
-				fmt.Printf("[0x%02x] ", b)
-			} else {
-				fmt.Printf("%c ", b)
-			}
-		}
-		fmt.Println()
-
-		chunkStart := time.Now()
+		// WriteWithoutResponse is faster and doesn't auto-retry (preventing duplicates)
 		_, err := m.dataChar.WriteWithoutResponse(chunk)
-		chunkDuration := time.Since(chunkStart)
-
 		if err != nil {
-			fmt.Printf("🔴 ERROR: Chunk %d/%d failed after %v: %v\n", chunkNum, totalChunks, chunkDuration, err)
-			return fmt.Errorf("failed to send chunk %d: %v", chunkNum, err)
+			return fmt.Errorf("failed to send chunk %d: %v", i/chunkSize, err)
 		}
 
-		fmt.Printf("🟢 SUCCESS: Chunk %d/%d sent in %v\n", chunkNum, totalChunks, chunkDuration) // CRITICAL: Always delay after each chunk (except the last one)
-		if i+chunkSize < dataLen {
-			fmt.Printf("🟡 DEBUG: Inter-chunk delay (%v) to prevent race condition...\n", interChunkDelay)
-			time.Sleep(interChunkDelay)
+		// 30ms delay allows firmware loop() to process previous chunk reliably
+		time.Sleep(30 * time.Millisecond)
+	}
+
+	fmt.Println("➡️ All chunks sent. Waiting for confirmation...")
+
+	// 4. Wait for DONE (0x02)
+WaitDone:
+	for {
+		select {
+		case status := <-m.statusChan:
+			if status == STATUS_DONE {
+				fmt.Println("✅ RECEIVED DONE SIGNAL (0x02)")
+				break WaitDone
+			} else if status == STATUS_READY {
+				fmt.Println("⚠️ Received late READY signal while waiting for DONE (ignoring)")
+			} else {
+				fmt.Printf("⚠️ Unexpected status: 0x%02x\n", status)
+			}
+		case <-time.After(5 * time.Second):
+			return fmt.Errorf("timeout waiting for DONE signal from Scribe")
 		}
 	}
 
-	fmt.Printf("🟡 DEBUG: All %d chunks transmitted successfully\n", totalChunks)
-
-	// CRITICAL FIX: Extended processing delay to ensure ESP32 completes processing
-	// The ESP32 needs time to process all chunks sequentially and update to_read properly
-	processingDelay := time.Duration(800+dataLen*8) * time.Millisecond
-
-	// Ensure reasonable bounds
-	if processingDelay < 1000*time.Millisecond {
-		processingDelay = 1000 * time.Millisecond
-	}
-	if processingDelay > 3000*time.Millisecond {
-		processingDelay = 3000 * time.Millisecond
-	}
-
-	fmt.Printf("🟡 DEBUG: Extended processing delay: %v (prevents ESP32 race condition)\n", processingDelay)
-	processingStart := time.Now()
-	time.Sleep(processingDelay)
-	processingActual := time.Since(processingStart)
-	fmt.Printf("🟡 DEBUG: Processing delay completed in %v\n", processingActual)
-
-	fmt.Println("🟢 === RACE CONDITION FIX - Transmission completed successfully ===")
+	fmt.Println("🚀 TRANSMISSION SUCCESSFUL")
 	return nil
-} /*
-data transfer info
-	- total size of info: 4 bytes
-	- 1st byte = version
-	- 2nd byte = font size
-	- 3-4th byte = data size
-*/
+}
 
-// createInfoPacket creates the SCRIBE info packet (4 bytes: version, font, data_size_low, data_size_high)
+// createInfoPacket creates the SCRIBE info packet
 func (m *MacOSBLEBackend) createInfoPacket(dataSize uint16) []byte {
 	buf := make([]byte, 4)
-	buf[0] = scribeDataTransferVersion               // version = 1
-	buf[1] = 1                                       // font size = 1
-	binary.LittleEndian.PutUint16(buf[2:], dataSize) // little-endian data size
+	buf[0] = scribeDataTransferVersion
+	buf[1] = 1 // font size
+	binary.LittleEndian.PutUint16(buf[2:], dataSize)
 	return buf
 }
 
-// Close closes the BLE backend and releases resources
+// Close closes the BLE backend
 func (m *MacOSBLEBackend) Close() error {
 	return m.Disconnect()
-}
-
-// getMacOSBluetoothStatus checks the Bluetooth status on macOS
-func (m *MacOSBLEBackend) getMacOSBluetoothStatus() (bool, error) {
-	cmd := exec.Command("system_profiler", "SPBluetoothDataType")
-	output, err := cmd.Output()
-	if err != nil {
-		return false, err
-	}
-
-	return strings.Contains(string(output), "State: On"), nil
 }
