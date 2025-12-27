@@ -6,6 +6,8 @@ The Scribe App is the official companion application for the [Scribe Hardware](.
 
 **Hardware:** [Scribe Device](../scribe/README.md)
 
+![Scribe App Screenshot](assets/app.png)
+
 ## Features
 
 *   **Cross-Platform:** Built with [Wails](https://wails.io/), running on macOS, Windows, and Linux.
