@@ -1,19 +1,59 @@
-# README
+# Scribe App
 
-## About
+## Overview
 
-This is the official Wails React template.
+The Scribe App is the official companion application for the [Scribe Hardware](../scribe/README.md). It allows users to seamlessly send text, notes, and data to their Scribe device via Bluetooth Low Energy (BLE).
 
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+**Hardware:** [Scribe Device](../scribe/README.md)
 
-## Live Development
+## Features
 
-To run in live development mode, run `wails dev` in the project directory. This will run a Vite development
-server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser
-and have access to your Go methods, there is also a dev server that runs on http://localhost:34115. Connect
-to this in your browser, and you can call your Go code from devtools.
+*   **Cross-Platform:** Built with [Wails](https://wails.io/), running on macOS, Windows, and Linux.
+*   **Bluetooth Connectivity:** Automatically detects and connects to the Scribe device.
+*   **Text Management:** Type, format, and send text strings directly to the Scribe OLED display.
+*   **User Interface:** Clean and intuitive React-based frontend.
 
-## Building
+## Application
 
-To build a redistributable, production mode package, use `wails build`.
+The primary function of the Scribe App is to assist with memory and organization. Users can send text strings via the app, which the Scribe firmware processes and organizes into pages. This helps users keep track of important notes, dates, and names, enhancing their ability to recall information easily.
+
+## Development
+
+This project is built using **Go** (backend) and **React** (frontend) via the **Wails** framework.
+
+### Prerequisites
+*   Go 1.18+
+*   Node.js & npm
+
+### Setup
+
+1.  Clone the repository.
+2.  Navigate to the `scribe-app` directory.
+3.  Install frontend dependencies:
+    ```bash
+    cd frontend
+    npm install
+    ```
+
+### Running in Development Mode
+
+To run the app in live development mode:
+
+```bash
+wails dev
+```
+
+This will start a Vite development server for the frontend and a Go backend server.
+
+### Building
+
+To build the application for production:
+
+```bash
+wails build
+```
+
+## Credits
+
+*   **App Backend & Architecture:** [George](https://github.com/freddycz)
+*   **Hardware & Concept:** [AthemiS13](https://github.com/AthemiS13)
